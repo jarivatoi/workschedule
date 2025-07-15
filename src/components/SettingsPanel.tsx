@@ -147,7 +147,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
   const formatCurrency = (amount: number) => {
     const currency = settings?.currency || 'Rs';
-    return `${currency} ${amount.toLocaleString('en-US', {
+    return `${currency}${amount.toLocaleString('en-US', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     })}`;
