@@ -436,44 +436,6 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">Applicable Days</label>
-              <label className="block text-sm font-medium text-gray-700 mb-3 text-center">Applicable Days</label>
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  { key: 'monday', label: 'Monday' },
-                  { key: 'tuesday', label: 'Tuesday' },
-                  { key: 'wednesday', label: 'Wednesday' },
-                  { key: 'thursday', label: 'Thursday' },
-                  { key: 'friday', label: 'Friday' },
-                  { key: 'saturday', label: 'Saturday' },
-                  { key: 'sunday', label: 'Sunday' },
-                  { key: 'specialDay', label: 'Special Day' }
-                ].map(day => (
-                  <label key={day.key} className="flex items-center space-x-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={formData.applicableDays[day.key as keyof typeof formData.applicableDays]}
-                      onChange={(e) => {
-                        setFormData(prev => ({
-                          ...prev,
-                          applicableDays: {
-                            ...prev.applicableDays,
-                            [day.key]: e.target.checked
-                          }
-                        }));
-                      }}
-                      className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 focus:ring-2 rounded"
-                    />
-                    <span className="text-sm text-gray-700">{day.label}</span>
-                  </label>
-                ))}
-              </div>
-              <p className="text-xs text-gray-500 mt-2">
-                Select which days this shift can be scheduled on
-              </p>
-            </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Normal Hours</label>
@@ -540,6 +502,43 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
                   style={{ textAlign: 'center' }}
                 />
               </div>
+            </div>
+
+            <div>
+              <label className="block text-base font-medium text-gray-700 mb-3 text-center">Applicable Days</label>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { key: 'monday', label: 'Monday' },
+                  { key: 'tuesday', label: 'Tuesday' },
+                  { key: 'wednesday', label: 'Wednesday' },
+                  { key: 'thursday', label: 'Thursday' },
+                  { key: 'friday', label: 'Friday' },
+                  { key: 'saturday', label: 'Saturday' },
+                  { key: 'sunday', label: 'Sunday' },
+                  { key: 'specialDay', label: 'Special Day' }
+                ].map(day => (
+                  <label key={day.key} className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.applicableDays[day.key as keyof typeof formData.applicableDays]}
+                      onChange={(e) => {
+                        setFormData(prev => ({
+                          ...prev,
+                          applicableDays: {
+                            ...prev.applicableDays,
+                            [day.key]: e.target.checked
+                          }
+                        }));
+                      }}
+                      className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 focus:ring-2 rounded"
+                    />
+                    <span className="text-sm text-gray-700">{day.label}</span>
+                  </label>
+                ))}
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                Select which days this shift can be scheduled on
+              </p>
             </div>
             
             {/* Time difference info */}
