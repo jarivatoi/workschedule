@@ -165,13 +165,15 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     
     // If focused, allow typing and clear previous formatting
     if (salaryInputFocused) {
-      const cleanValue = inputValue.replace(/[^\d]/g, ''); // Remove everything except digits
-      const numericValue = parseInt(cleanValue, 10) || 0;
+      // Remove everything except digits, but preserve the input as string for length checking
+      const cleanValue = inputValue.replace(/[^\d]/g, '');
       
-      // Validate maximum 7 digits (9,999,999)
-      if (numericValue > 9999999) {
+      // Validate maximum 7 digits by string length, not numeric value
+      if (cleanValue.length > 7) {
         return; // Don't update if exceeds maximum
       }
+      
+      const numericValue = parseInt(cleanValue, 10) || 0;
       
       // Store raw input for editing
       setSalaryDisplayValue(cleanValue);
@@ -188,13 +190,13 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     
     // If not focused, handle formatted input
     const cleanValue = inputValue.replace(/[^\d]/g, '');
-    const numericValue = parseInt(cleanValue, 10) || 0;
     
-    // Validate maximum 7 digits (9,999,999)
-    if (numericValue > 9999999) {
+    // Validate maximum 7 digits by string length
+    if (cleanValue.length > 7) {
       return; // Don't update if exceeds maximum
     }
     
+    const numericValue = parseInt(cleanValue, 10) || 0;
     setSalaryDisplayValue(cleanValue);
     
     onUpdateBasicSalary(numericValue);
@@ -646,12 +648,12 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 onChange={handleSalaryChange}
                 onFocus={handleSalaryFocus}
                 onBlur={handleSalaryBlur}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-right text-base font-medium"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center text-base font-medium"
                 placeholder="0"
-                maxLength="9"
+                maxLength="10"
               />
               <p className="text-xs text-gray-500 mt-1 text-center">
-                Maximum: 9,999,999
+                Maximum: 9,999,999 (7 digits)
               </p>
             </div>
           </div>
@@ -673,7 +675,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 onFocus={handleHourlyRateFocus}
                 onBlur={handleHourlyRateBlur}
                 className={`w-full pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-base font-medium ${
-                  hourlyRateInputFocused ? 'pl-24 text-left' : 'pl-4 text-center'
+                  hourlyRateInputFocused ? 'pl-24 text-center' : 'pl-4 text-center'
                 } ${formulaError ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : ''}`}
                 placeholder={hourlyRateInputFocused ? "" : "Enter formula or amount"}
                 style={{
