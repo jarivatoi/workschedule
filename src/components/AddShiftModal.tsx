@@ -482,7 +482,7 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
                   value={formData.normalHours}
                   onChange={(e) => {
                     const value = e.target.value;
-                    if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                    if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
                       const numericValue = value === '' ? 0 : parseFloat(value) || 0;
                       setFormData(prev => ({ ...prev, normalHours: numericValue }));
                       
@@ -496,12 +496,12 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
                     }
                   }}
                   onFocus={(e) => {
-                    if (e.target.value === '0') {
+                    if (e.target.value === '0' || e.target.value === '0.00') {
                       e.target.select();
                     }
                   }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center hours-input"
-                  placeholder="8.0"
+                  placeholder="8.00"
                   style={{ textAlign: 'center' }}
                 />
               </div>
@@ -514,7 +514,7 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
                   value={formData.overtimeHours}
                   onChange={(e) => {
                     const value = e.target.value;
-                    if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                    if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
                       const numericValue = value === '' ? 0 : parseFloat(value) || 0;
                       setFormData(prev => ({ ...prev, overtimeHours: numericValue }));
                       
@@ -528,12 +528,12 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
                     }
                   }}
                   onFocus={(e) => {
-                    if (e.target.value === '0') {
+                    if (e.target.value === '0' || e.target.value === '0.00') {
                       e.target.select();
                     }
                   }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center hours-input"
-                  placeholder="0.0"
+                  placeholder="0.00"
                   style={{ textAlign: 'center' }}
                 />
               </div>
