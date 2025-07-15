@@ -1,8 +1,8 @@
 const CACHE_NAME = 'xray-anwh-v7';
 const urlsToCache = [
-  '/anwh/',
-  '/anwh/index.html',
-  '/anwh/manifest.json'
+  '/workschedule/',
+  '/workschedule/index.html',
+  '/workschedule/manifest.json'
 ];
 
 // Install event - cache essential resources
@@ -57,11 +57,11 @@ self.addEventListener('fetch', (event) => {
             return response;
           }
           // If network fails or returns error, try cache
-          return caches.match('/anwh/index.html') || caches.match('/anwh/');
+          return caches.match('/workschedule/index.html') || caches.match('/workschedule/');
         })
         .catch(() => {
           // Network completely failed, try cache
-          return caches.match('/anwh/index.html') || caches.match('/anwh/') || 
+          return caches.match('/workschedule/index.html') || caches.match('/workschedule/') ||
                  new Response(`
                    <!DOCTYPE html>
                    <html>

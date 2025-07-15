@@ -63,7 +63,7 @@
     </style>
     
     <!-- PWA Manifest -->
-    <link rel="manifest" href="/anwh/manifest.json">
+    <link rel="manifest" href="/workschedule/manifest.json">
     
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#000000">
@@ -88,13 +88,13 @@
     <!-- Prevent automatic network requests and caching -->
     
     <!-- PWA Icons -->
-    <link rel="apple-touch-icon" sizes="180x180" href="https://jarivatoi.github.io/anwh/Icon.PNG">
-    <link rel="apple-touch-icon" sizes="152x152" href="https://jarivatoi.github.io/anwh/Icon.PNG">
-    <link rel="apple-touch-icon" sizes="120x120" href="https://jarivatoi.github.io/anwh/Icon.PNG">
-    <link rel="apple-touch-icon" href="https://jarivatoi.github.io/anwh/Icon.PNG">
-    <link rel="icon" type="image/png" href="https://jarivatoi.github.io/anwh/Icon.PNG">
-    <link rel="icon" type="image/png" sizes="192x192" href="https://jarivatoi.github.io/anwh/Icon.PNG">
-    <link rel="icon" type="image/png" sizes="512x512" href="https://jarivatoi.github.io/anwh/Icon.PNG">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://jarivatoi.github.io/workschedule/Icon.PNG">
+    <link rel="apple-touch-icon" sizes="152x152" href="https://jarivatoi.github.io/workschedule/Icon.PNG">
+    <link rel="apple-touch-icon" sizes="120x120" href="https://jarivatoi.github.io/workschedule/Icon.PNG">
+    <link rel="apple-touch-icon" href="https://jarivatoi.github.io/workschedule/Icon.PNG">
+    <link rel="icon" type="image/png" href="https://jarivatoi.github.io/workschedule/Icon.PNG">
+    <link rel="icon" type="image/png" sizes="192x192" href="https://jarivatoi.github.io/workschedule/Icon.PNG">
+    <link rel="icon" type="image/png" sizes="512x512" href="https://jarivatoi.github.io/workschedule/Icon.PNG">
   </head>
   <body>
     <div id="root">
@@ -106,9 +106,9 @@
     <script>
       // Enhanced service worker registration with error handling
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/anwh/sw.js', {
+        navigator.serviceWorker.register('/workschedule/sw.js', {
           updateViaCache: 'none',
-          scope: '/anwh/'
+          scope: '/workschedule/'
         }).then((registration) => {
           console.log('SW: Registered successfully');
           
