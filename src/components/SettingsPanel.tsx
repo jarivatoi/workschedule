@@ -60,8 +60,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   }, []);
 
   const handleBasicSalaryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/[^\d]/g, '');
-    const numericValue = parseInt(value, 10) || 0;
+    const value = e.target.value.replace(/[^\d.]/g, '');
+    const numericValue = parseFloat(value) || 0;
     onUpdateBasicSalary(numericValue);
     
     if (hourlyRateFormula) {
@@ -72,11 +72,14 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   };
 
   const handleBasicSalaryFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.target.value = settings.basicSalary.toString();
+    e.target.value = settings.basicSalary.toFixed(2);
   };
 
   const handleBasicSalaryBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.target.value = settings.basicSalary.toLocaleString('en-US');
+    e.target.value = settings.basicSalary.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
   };
 
   const handleHourlyRateFormulaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -172,11 +175,14 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             </div>
             <input
               type="text"
-              defaultValue={settings.basicSalary.toLocaleString('en-US')}
+              defaultValue={settings.basicSalary.toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+              })}
               onChange={handleBasicSalaryChange}
               onFocus={handleBasicSalaryFocus}
               onBlur={handleBasicSalaryBlur}
-              placeholder="0"
+              placeholder="0.00"
               className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center text-lg"
             />
           </div>
@@ -212,7 +218,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               </div>
               <input
                 type="number"
-                value={hourlyRateValue}
+                value={hourlyRateValue.toFixed(2)}
                 onChange={handleHourlyRateChange}
                 step="0.01"
                 min="0"
@@ -257,7 +263,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               </label>
               <input
                 type="number"
-                value={settings.overtimeMultiplier || 1.5}
+                value={(settings.overtimeMultiplier || 1.5).toFixed(2)}
                 onChange={handleOvertimeMultiplierChange}
                 step="0.1"
                 min="1"
