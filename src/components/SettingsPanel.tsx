@@ -27,11 +27,14 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   onUpdateOvertimeMultiplier
 }) => {
   const [salaryDisplayValue, setSalaryDisplayValue] = useState('');
+  const [salaryInputFocused, setSalaryInputFocused] = useState(false);
   const [hourlyRateFormula, setHourlyRateFormula] = useState('');
+  const [hourlyRateInputFocused, setHourlyRateInputFocused] = useState(false);
   const [hourlyRateValue, setHourlyRateValue] = useState(0);
   const [overtimeMultiplier, setOvertimeMultiplier] = useState(1.5);
   const [showAddShift, setShowAddShift] = useState(false);
   const [editingShift, setEditingShift] = useState<CustomShift | null>(null);
+  const [formulaError, setFormulaError] = useState<string | null>(null);
   const [toast, setToast] = useState<{
     isOpen: boolean;
     message: string;
@@ -87,6 +90,14 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   };
 
   const parseHourlyRateFormula = (formula: string, basicSalary: number): number => {
+    if (!formula.trim()) return 0;
+    
+    // Handle direct numeric input
+    const directValue = parseFloat(formula);
+    if (!isNaN(directValue) && !formula.includes('x') && !formula.includes('/')) {
+      return directValue;
+    }
+    
     if (formula === 'x12/52/40') {
       return (basicSalary * 12) / 52 / 40;
     }
@@ -110,12 +121,11 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         }
       } catch (error) {
         console.error('Error parsing formula:', error);
+        return 0;
       }
     }
     
-    // If it's a direct number
-    const directValue = parseFloat(formula);
-    return isNaN(directValue) ? 0 : directValue;
+    return 0;
   };
 
   const formatFormulaDisplay = (formula: string): string => {
@@ -126,24 +136,66 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     // Replace 'x' with '×' and '/' with '÷' for display
     return formula.replace(/x/g, '×').replace(/\//g, '÷');
   };
+  const validateFormula = (formula: string): string | null => {
+    if (!formula.trim()) return null;
+    
+    // Allow direct numbers
+    const directValue = parseFloat(formula);
+    if (!isNaN(directValue) && !formula.includes('x') && !formula.includes('/')) {
+      return null;
+    }
+    
+    // Validate formula patterns
+    if (formula.includes('x') || formula.includes('/')) {
+      // Check for valid formula structure
+      if (formula === 'x12/52/40') return null;
+      
+      // Check for other valid patterns
+      const formulaPattern = /^x\d+(\.\d+)?(\/\d+(\.\d+)?)*$/;
+      if (formulaPattern.test(formula)) return null;
+      
+      return 'Invalid formula syntax. Use format like "x12/52/40" or enter a direct number.';
+    }
+    
+    return 'Invalid input. Enter a number or formula starting with "x".';
+  };
 
   const handleSalaryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
-    const cleanValue = inputValue.replace(/[^\d]/g, ''); // Remove everything except digits
-    const numericValue = parseSalaryFromDisplay(cleanValue);
+    
+    // If focused, allow typing and clear previous formatting
+    if (salaryInputFocused) {
+      const cleanValue = inputValue.replace(/[^\d]/g, ''); // Remove everything except digits
+      const numericValue = parseInt(cleanValue, 10) || 0;
+      
+      // Validate maximum 7 digits (9,999,999)
+      if (numericValue > 9999999) {
+        return; // Don't update if exceeds maximum
+      }
+      
+      // Store raw input for editing
+      setSalaryDisplayValue(cleanValue);
+      onUpdateBasicSalary(numericValue);
+      
+      // Recalculate hourly rate if using formula
+      if (hourlyRateFormula) {
+        const newHourlyRate = parseHourlyRateFormula(hourlyRateFormula, numericValue);
+        setHourlyRateValue(newHourlyRate);
+        onUpdateHourlyRate?.(newHourlyRate);
+      }
+      return;
+    }
+    
+    // If not focused, handle formatted input
+    const cleanValue = inputValue.replace(/[^\d]/g, '');
+    const numericValue = parseInt(cleanValue, 10) || 0;
     
     // Validate maximum 7 digits (9,999,999)
     if (numericValue > 9999999) {
       return; // Don't update if exceeds maximum
     }
     
-    // Only format if there's a value
-    if (numericValue > 0) {
-      const formattedValue = formatSalaryWithCommas(numericValue);
-      setSalaryDisplayValue(formattedValue);
-    } else {
-      setSalaryDisplayValue('');
-    }
+    setSalaryDisplayValue(cleanValue);
     
     onUpdateBasicSalary(numericValue);
     
@@ -158,6 +210,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   const handleHourlyRateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setHourlyRateFormula(value);
+    
+    // Validate formula syntax
+    const error = validateFormula(value);
+    setFormulaError(error);
     
     if (value) {
       const newRate = parseHourlyRateFormula(value, settings.basicSalary || 0);
@@ -176,27 +232,56 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   };
 
   const handleSalaryFocus = () => {
+    setSalaryInputFocused(true);
+    // Show raw numeric value for editing
     const currentValue = settings.basicSalary || 0;
-    if (currentValue > 0) {
-      setSalaryDisplayValue(formatSalaryWithCommas(currentValue));
-    } else {
-      setSalaryDisplayValue('');
-    }
+    setSalaryDisplayValue(currentValue > 0 ? currentValue.toString() : '');
   };
 
   const handleSalaryBlur = () => {
+    setSalaryInputFocused(false);
+    // Clear display value to show formatted version
     setSalaryDisplayValue('');
+  };
+  
+  const handleHourlyRateFocus = () => {
+    setHourlyRateInputFocused(true);
+  };
+  
+  const handleHourlyRateBlur = () => {
+    setHourlyRateInputFocused(false);
   };
 
   const getSalaryInputValue = () => {
-    // If we're actively editing, show the display value
-    if (salaryDisplayValue) {
+    // If focused, show raw input value
+    if (salaryInputFocused && salaryDisplayValue !== '') {
       return salaryDisplayValue;
+    }
+    
+    // If not focused, show formatted value
+    if (!salaryInputFocused) {
+      const currentValue = settings.basicSalary || 0;
+      return currentValue > 0 ? formatSalaryWithCommas(currentValue) : '';
     }
     
     // Otherwise show the formatted current value
     const currentValue = settings.basicSalary || 0;
-    return currentValue > 0 ? formatSalaryWithCommas(currentValue) : '';
+    return salaryDisplayValue || (currentValue > 0 ? currentValue.toString() : '');
+  };
+  
+  const getHourlyRateDisplayValue = () => {
+    // If focused, show the formula for editing
+    if (hourlyRateInputFocused) {
+      return hourlyRateFormula;
+    }
+    
+    // If not focused and has formula, show calculated amount
+    if (hourlyRateFormula && hourlyRateValue > 0) {
+      return formatCurrency(hourlyRateValue);
+    }
+    
+    // If no formula, show empty
+    return '';
   };
 
   const getOvertimeRate = () => {
@@ -576,28 +661,48 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               Hourly Rate
             </label>
             <div className="relative max-w-xs mx-auto mb-2">
-              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none z-10">
-                Basic Salary
-              </div>
+              {hourlyRateInputFocused && (
+                <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none z-10">
+                  Basic Salary
+                </div>
+              )}
               <input
                 type="text"
-                value={hourlyRateFormula}
+                value={getHourlyRateDisplayValue()}
                 onChange={handleHourlyRateChange}
-                className="w-full pl-24 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-left text-base font-medium"
-                placeholder=""
+                onFocus={handleHourlyRateFocus}
+                onBlur={handleHourlyRateBlur}
+                className={`w-full pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-base font-medium ${
+                  hourlyRateInputFocused ? 'pl-24 text-left' : 'pl-4 text-center'
+                } ${formulaError ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : ''}`}
+                placeholder={hourlyRateInputFocused ? "" : "Enter formula or amount"}
                 style={{
-                  color: hourlyRateFormula ? '#374151' : '#9CA3AF'
+                  color: (hourlyRateInputFocused ? hourlyRateFormula : hourlyRateValue > 0) ? '#374151' : '#9CA3AF'
                 }}
               />
             </div>
+            
+            {/* Formula Error */}
+            {formulaError && (
+              <div className="text-xs text-red-600 text-center mb-2">
+                {formulaError}
+              </div>
+            )}
+            
+            {/* Formula Display */}
             {hourlyRateFormula && (
               <div className="text-xs text-gray-600 text-center mb-2">
                 Formula: {formatFormulaDisplay(hourlyRateFormula)}
               </div>
             )}
-            <div className="text-sm font-medium text-center text-indigo-600">
-              = {formatCurrency(hourlyRateValue)}
-            </div>
+            
+            {/* Calculated Value Display */}
+            {!hourlyRateInputFocused && hourlyRateValue > 0 && (
+              <div className="text-sm font-medium text-center text-indigo-600">
+                = {formatCurrency(hourlyRateValue)}
+              </div>
+            )}
+            
             <p className="text-xs text-gray-500 mt-1 text-center">
               Enter formula (e.g., x12/52/40) or direct value
             </p>
