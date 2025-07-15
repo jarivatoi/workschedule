@@ -477,21 +477,19 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Normal Hours</label>
                 <input
-                  type="text"
+                  type="number"
                   inputMode="decimal"
-                  value={formData.normalHours}
+                  value={formData.normalHours || ''}
                   onChange={(e) => {
                     const value = e.target.value;
-                    if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
-                      const numericValue = value === '' ? 0 : parseFloat(value) || 0;
-                      setFormData(prev => ({ ...prev, normalHours: numericValue }));
-                      
-                      // Clear error if hours are now valid
-                      if (error && error.includes('Hours Validation Error')) {
-                        const hoursValidation = validateHours(numericValue, formData.overtimeHours, formData.fromTime, formData.toTime);
-                        if (!hoursValidation) {
-                          setError(null);
-                        }
+                    const numericValue = value === '' ? 0 : parseFloat(value) || 0;
+                    setFormData(prev => ({ ...prev, normalHours: numericValue }));
+                    
+                    // Clear error if hours are now valid
+                    if (error && error.includes('Hours Validation Error')) {
+                      const hoursValidation = validateHours(numericValue, formData.overtimeHours, formData.fromTime, formData.toTime);
+                      if (!hoursValidation) {
+                        setError(null);
                       }
                     }
                   }}
@@ -500,8 +498,11 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
                       e.target.select();
                     }
                   }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center hours-input"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center"
                   placeholder="8.00"
+                  step="0.01"
+                  min="0"
+                  max="24"
                   style={{ textAlign: 'center' }}
                 />
               </div>
@@ -509,21 +510,19 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Overtime Hours</label>
                 <input
-                  type="text"
+                  type="number"
                   inputMode="decimal"
-                  value={formData.overtimeHours}
+                  value={formData.overtimeHours || ''}
                   onChange={(e) => {
                     const value = e.target.value;
-                    if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
-                      const numericValue = value === '' ? 0 : parseFloat(value) || 0;
-                      setFormData(prev => ({ ...prev, overtimeHours: numericValue }));
-                      
-                      // Clear error if hours are now valid
-                      if (error && error.includes('Hours Validation Error')) {
-                        const hoursValidation = validateHours(formData.normalHours, numericValue, formData.fromTime, formData.toTime);
-                        if (!hoursValidation) {
-                          setError(null);
-                        }
+                    const numericValue = value === '' ? 0 : parseFloat(value) || 0;
+                    setFormData(prev => ({ ...prev, overtimeHours: numericValue }));
+                    
+                    // Clear error if hours are now valid
+                    if (error && error.includes('Hours Validation Error')) {
+                      const hoursValidation = validateHours(formData.normalHours, numericValue, formData.fromTime, formData.toTime);
+                      if (!hoursValidation) {
+                        setError(null);
                       }
                     }
                   }}
@@ -532,8 +531,11 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
                       e.target.select();
                     }
                   }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center hours-input"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center"
                   placeholder="0.00"
+                  step="0.01"
+                  min="0"
+                  max="24"
                   style={{ textAlign: 'center' }}
                 />
               </div>
