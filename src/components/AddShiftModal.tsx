@@ -474,8 +474,8 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
               <div className="font-medium mb-2">Preview:</div>
               <div className="text-sm space-y-1">
                 <div>{formatShiftDisplay(formData.fromTime, formData.toTime)}</div>
-                <div>Normal: {formData.normalHours}h × {formatCurrency(hourlyRate, false)} = {formatCurrency((formData.normalHours || 0) * hourlyRate)}</div>
-                <div>Overtime: {formData.overtimeHours}h × {formatCurrency(overtimeRate, false)} = {formatCurrency((formData.overtimeHours || 0) * overtimeRate)}</div>
+                <div>Normal: {formData.normalHours}h × {formatCurrency(hourlyRate)} = {formatCurrency((formData.normalHours || 0) * hourlyRate)}</div>
+                <div>Overtime: {formData.overtimeHours}h × {formatCurrency(overtimeRate)} = {formatCurrency((formData.overtimeHours || 0) * overtimeRate)}</div>
                 <div className="font-semibold border-t pt-2">Total: {formatCurrency(calculateAmount(formData.normalHours || 0, formData.overtimeHours || 0))}</div>
               </div>
             </div>
@@ -495,60 +495,6 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
             <button
               onClick={handleSave}
               disabled={!formData.label || !formData.fromTime || !formData.toTime || (formData.normalHours <= 0 && formData.overtimeHours <= 0)}
-              className="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {editingShift ? 'Update Shift' : 'Add Shift'}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  return createPortal(modalContent, document.body);
-};
-
-              <input
-                type="text"
-                inputMode="decimal"
-                value={formData.hours}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                    setFormData(prev => ({ ...prev, hours: value === '' ? 0 : parseFloat(value) || 0 }));
-                  }
-                }}
-                onFocus={(e) => {
-                  if (e.target.value === '0') {
-                    e.target.select();
-                  }
-                }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center hours-input"
-                placeholder="8.0"
-                style={{ textAlign: 'center' }}
-              />
-              <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                <div className="font-medium">Preview:</div>
-                <div>{formatShiftDisplay(formData.fromTime, formData.toTime)}</div>
-                <div>Amount: {formatCurrency(calculateAmount(formData.hours))}</div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="h-8" />
-        </div>
-        
-        <div className="p-6 pt-4 border-t border-gray-200 flex-shrink-0">
-          <div className="flex space-x-3">
-            <button
-              onClick={onClose}
-              className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors duration-200"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={!formData.label || !formData.fromTime || !formData.toTime || formData.hours <= 0}
               className="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {editingShift ? 'Update Shift' : 'Add Shift'}
