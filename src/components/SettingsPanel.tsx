@@ -130,6 +130,12 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     const inputValue = e.target.value;
     const cleanValue = inputValue.replace(/[^\d,]/g, '');
     const numericValue = parseSalaryFromDisplay(cleanValue);
+    
+    // Validate maximum 7 digits (9,999,999)
+    if (numericValue > 9999999) {
+      return; // Don't update if exceeds maximum
+    }
+    
     const formattedValue = formatSalaryWithCommas(numericValue);
     setSalaryDisplayValue(formattedValue);
     onUpdateBasicSalary(numericValue);
@@ -534,8 +540,11 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 onFocus={handleSalaryFocus}
                 onBlur={handleSalaryBlur}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center text-base font-medium"
-                placeholder="30,000"
+                placeholder="Maximum: 9,999,999"
               />
+              <p className="text-xs text-gray-500 mt-1 text-center">
+                Maximum: 9,999,999
+              </p>
             </div>
           </div>
           
@@ -549,7 +558,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 value={hourlyRateFormula}
                 onChange={handleHourlyRateChange}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center text-base font-medium"
-                placeholder="x12/52/40 or direct value"
+                placeholder="Basic Salary"
+                style={{
+                  color: hourlyRateFormula ? '#374151' : '#9CA3AF'
+                }}
               />
             </div>
             {hourlyRateFormula && (
@@ -560,6 +572,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             <div className="text-sm font-medium text-center text-indigo-600">
               = {formatCurrency(hourlyRateValue)}
             </div>
+            <p className="text-xs text-gray-500 mt-1 text-center">
+              Enter formula (e.g., x12/52/40) or direct value
+            </p>
           </div>
         </div>
         

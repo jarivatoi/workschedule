@@ -42,6 +42,36 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
 
   const [error, setError] = useState<string | null>(null);
 
+  // Calculate total hours between start and end time
+  const calculateTimeDifference = (fromTime: string, toTime: string): number => {
+    if (!fromTime || !toTime) return 0;
+    
+    const [fromHour, fromMin] = fromTime.split(':').map(Number);
+    const [toHour, toMin] = toTime.split(':').map(Number);
+    
+    const fromMinutes = fromHour * 60 + fromMin;
+    let toMinutes = toHour * 60 + toMin;
+    
+    // Handle overnight shifts
+    if (toMinutes <= fromMinutes) {
+      toMinutes += 24 * 60;
+    }
+    
+    return (toMinutes - fromMinutes) / 60;
+  };
+
+  // Validate that total hours don't exceed time difference
+  const validateHours = (normalHours: number, overtimeHours: number, fromTime: string, toTime: string): string | null => {
+    const totalHours = normalHours + overtimeHours;
+    const timeDifference = calculateTimeDifference(fromTime, toTime);
+    
+    if (totalHours > timeDifference) {
+      return `Total hours (${totalHours}) cannot exceed time difference (${timeDifference.toFixed(1)} hours)`;
+    }
+    
+    return null;
+  };
+
   // Reset form when modal opens/closes or editing shift changes
   useEffect(() => {
     if (isOpen) {
@@ -198,6 +228,13 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
 
     if (formData.normalHours <= 0 && formData.overtimeHours <= 0) {
       setError('Validation Error: Total hours must be greater than 0');
+      return;
+    }
+    
+    // Validate hours don't exceed time difference
+    const hoursValidation = validateHours(formData.normalHours, formData.overtimeHours, formData.fromTime, formData.toTime);
+    if (hoursValidation) {
+      setError(`Hours Validation Error: ${hoursValidation}`);
       return;
     }
     
@@ -370,7 +407,14 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
                 <input
                   type="time"
                   value={formData.fromTime}
-                  onChange={(e) => setFormData(prev => ({ ...prev, fromTime: e.target.value }))}
+                  onChange={(e) => {
+                    setFormData(prev => ({ ...prev, fromTime: e.target.value }));
+                    
+                    // Clear hours validation error when time changes
+                    if (error && error.includes('Hours Validation Error')) {
+                      setError(null);
+                    }
+                  }}
                   className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
               </div>
@@ -379,7 +423,14 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
                 <input
                   type="time"
                   value={formData.toTime}
-                  onChange={(e) => setFormData(prev => ({ ...prev, toTime: e.target.value }))}
+                  onChange={(e) => {
+                    setFormData(prev => ({ ...prev, toTime: e.target.value }));
+                    
+                    // Clear hours validation error when time changes
+                    if (error && error.includes('Hours Validation Error')) {
+                      setError(null);
+                    }
+                  }}
                   className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
               </div>
@@ -432,7 +483,16 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
                   onChange={(e) => {
                     const value = e.target.value;
                     if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                      setFormData(prev => ({ ...prev, normalHours: value === '' ? 0 : parseFloat(value) || 0 }));
+                      const numericValue = value === '' ? 0 : parseFloat(value) || 0;
+                      setFormData(prev => ({ ...prev, normalHours: numericValue }));
+                      
+                      // Clear error if hours are now valid
+                      if (error && error.includes('Hours Validation Error')) {
+                        const hoursValidation = validateHours(numericValue, formData.overtimeHours, formData.fromTime, formData.toTime);
+                        if (!hoursValidation) {
+                          setError(null);
+                        }
+                      }
                     }
                   }}
                   onFocus={(e) => {
@@ -455,7 +515,16 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
                   onChange={(e) => {
                     const value = e.target.value;
                     if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                      setFormData(prev => ({ ...prev, overtimeHours: value === '' ? 0 : parseFloat(value) || 0 }));
+                      const numericValue = value === '' ? 0 : parseFloat(value) || 0;
+                      setFormData(prev => ({ ...prev, overtimeHours: numericValue }));
+                      
+                      // Clear error if hours are now valid
+                      if (error && error.includes('Hours Validation Error')) {
+                        const hoursValidation = validateHours(formData.normalHours, numericValue, formData.fromTime, formData.toTime);
+                        if (!hoursValidation) {
+                          setError(null);
+                        }
+                      }
                     }
                   }}
                   onFocus={(e) => {
@@ -469,6 +538,18 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
                 />
               </div>
             </div>
+            
+            {/* Time difference info */}
+            {formData.fromTime && formData.toTime && (
+              <div className="mt-2 p-2 bg-blue-50 rounded text-sm text-blue-700 text-center">
+                Time difference: {calculateTimeDifference(formData.fromTime, formData.toTime).toFixed(1)} hours
+                {formData.normalHours + formData.overtimeHours > 0 && (
+                  <span className="ml-2">
+                    | Total entered: {(formData.normalHours + formData.overtimeHours).toFixed(1)} hours
+                  </span>
+                )}
+              </div>
+            )}
             
             <div className="mt-4 p-4 bg-gray-50 rounded-lg">
               <div className="font-medium mb-2">Preview:</div>
