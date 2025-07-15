@@ -193,16 +193,26 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     
     // Validate maximum 7 digits by string length
     if (cleanValue.length > 7) {
-      return; // Don't update if exceeds maximum
-    }
+    const rawInput = e.target.value;
     
-    const numericValue = parseInt(cleanValue, 10) || 0;
-    setSalaryDisplayValue(cleanValue);
+    // Allow only digits - remove any non-digit characters
+    const digitsOnly = rawInput.replace(/[^\d]/g, '');
     
+    // Convert to number (empty string becomes 0)
+    const numericValue = digitsOnly === '' ? 0 : parseInt(digitsOnly, 10);
+    
+    // Update the salary value
     onUpdateBasicSalary(numericValue);
     
+    // Update the input field with formatted value only if there are digits
+    if (digitsOnly !== '') {
+      e.target.value = numericValue.toLocaleString('en-US');
+    } else {
+      e.target.value = '';
+    }
+    
     // Recalculate hourly rate if using formula
-    if (hourlyRateFormula) {
+    if (hourlyRateFormula && numericValue > 0) {
       const newHourlyRate = parseHourlyRateFormula(hourlyRateFormula, numericValue);
       setHourlyRateValue(newHourlyRate);
       onUpdateHourlyRate?.(newHourlyRate);
@@ -644,13 +654,27 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               <input
                 type="text"
                 inputMode="numeric"
-                value={getSalaryInputValue()}
+                defaultValue={settings.basicSalary > 0 ? settings.basicSalary.toLocaleString('en-US') : ''}
                 onChange={handleSalaryChange}
+                onFocus={(e) => {
+                  // Show raw number when focused for easier editing
+                  if (settings.basicSalary > 0) {
+                    e.target.value = settings.basicSalary.toString();
+                  }
+                }}
+                onBlur={(e) => {
+                  // Format with commas when focus is lost
+                  const value = e.target.value.replace(/[^\d]/g, '');
+                  if (value !== '' && value !== '0') {
+                    e.target.value = parseInt(value, 10).toLocaleString('en-US');
+                  } else {
+                    e.target.value = '';
+                  }
+                }}
                 onFocus={handleSalaryFocus}
                 onBlur={handleSalaryBlur}
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center text-base font-medium"
                 placeholder="0"
-                maxLength="10"
               />
               <p className="text-xs text-gray-500 mt-1 text-center">
                 Maximum: 9,999,999 (7 digits)
