@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { Settings as SettingsIcon, Plus, Trash2, Clock, DollarSign, Edit } from 'lucide-react';
+import { Settings as SettingsIcon, Plus, Trash2, Clock, DollarSign, Edit, Calculator } from 'lucide-react';
 import { Settings, CustomShift } from '../types';
 import { CURRENCY_OPTIONS } from '../constants';
 import { AddShiftModal } from './AddShiftModal';
@@ -12,6 +12,8 @@ interface SettingsPanelProps {
   onAddCustomShift: (shift: CustomShift) => void;
   onUpdateCustomShift: (shiftId: string, shift: CustomShift) => void;
   onDeleteCustomShift: (shiftId: string) => void;
+  onUpdateHourlyRate?: (rate: number) => void;
+  onUpdateOvertimeMultiplier?: (multiplier: number) => void;
 }
 
 export const SettingsPanel: React.FC<SettingsPanelProps> = ({
@@ -20,9 +22,14 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   onUpdateCurrency,
   onAddCustomShift,
   onUpdateCustomShift,
-  onDeleteCustomShift
+  onDeleteCustomShift,
+  onUpdateHourlyRate,
+  onUpdateOvertimeMultiplier
 }) => {
   const [salaryDisplayValue, setSalaryDisplayValue] = useState('');
+  const [hourlyRateFormula, setHourlyRateFormula] = useState('');
+  const [hourlyRateValue, setHourlyRateValue] = useState(0);
+  const [overtimeMultiplier, setOvertimeMultiplier] = useState(1.5);
   const [showAddShift, setShowAddShift] = useState(false);
   const [editingShift, setEditingShift] = useState<CustomShift | null>(null);
   const [toast, setToast] = useState<{
@@ -35,17 +42,39 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     type: 'success'
   });
 
-  const formatCurrency = (amount: number) => {
+  // Initialize hourly rate and overtime multiplier from settings
+  useEffect(() => {
+    if (settings) {
+      setHourlyRateValue(settings.hourlyRate || 0);
+      setOvertimeMultiplier(settings.overtimeMultiplier || 1.5);
+      
+      // Check if hourly rate was calculated from basic salary
+      if (settings.basicSalary && settings.hourlyRate) {
+        const calculatedRate = (settings.basicSalary * 12) / 52 / 40;
+        if (Math.abs(calculatedRate - settings.hourlyRate) < 0.01) {
+          setHourlyRateFormula('x12/52/40');
+        }
+      }
+    }
+  }, [settings]);
+
+  const formatCurrency = (amount: number, includeCurrency: boolean = true) => {
     const currency = settings?.currency || 'Rs';
-    return `${currency} ${amount.toLocaleString('en-US', {
+    const currencyOption = CURRENCY_OPTIONS.find(c => c.code === currency);
+    
+    // Special formatting for Indian currency (no decimals)
+    if (currency === 'INR') {
+      const formatted = Math.round(amount).toLocaleString('en-IN');
+      return includeCurrency ? `${currencyOption?.symbol || '₹'} ${formatted}` : formatted;
+    }
+    
+    // US format with 2 decimal places for all other currencies
+    const formatted = amount.toLocaleString('en-US', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
-    })}`;
-  };
-
-  const formatHourlyRate = (rate: number) => {
-    const currencyOption = CURRENCY_OPTIONS.find(c => c.code === settings.currency) || { symbol: 'Rs' };
-    return `${currencyOption.symbol} ${rate.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    });
+    
+    return includeCurrency ? `${currencyOption?.symbol || currency} ${formatted}` : formatted;
   };
 
   const formatSalaryWithCommas = (value: number) => {
@@ -53,7 +82,48 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   };
 
   const parseSalaryFromDisplay = (displayValue: string) => {
-    return parseInt(displayValue.replace(/,/g, ''), 10) || 0;
+    return parseInt(displayValue.replace(/[^\d,]/g, ''), 10) || 0;
+  };
+
+  const parseHourlyRateFormula = (formula: string, basicSalary: number): number => {
+    if (formula === 'x12/52/40') {
+      return (basicSalary * 12) / 52 / 40;
+    }
+    
+    // Handle other formula patterns
+    if (formula.includes('x') && formula.includes('/')) {
+      try {
+        // Replace 'x' with '*' for evaluation
+        const mathExpression = formula.replace(/x/g, '*');
+        // Simple evaluation for basic formulas
+        const parts = mathExpression.split('*');
+        if (parts.length === 2 && parts[0] === '' && parts[1].includes('/')) {
+          const divisionParts = parts[1].split('/');
+          let result = basicSalary;
+          for (const part of divisionParts) {
+            if (part) {
+              result = result / parseFloat(part);
+            }
+          }
+          return result;
+        }
+      } catch (error) {
+        console.error('Error parsing formula:', error);
+      }
+    }
+    
+    // If it's a direct number
+    const directValue = parseFloat(formula);
+    return isNaN(directValue) ? 0 : directValue;
+  };
+
+  const formatFormulaDisplay = (formula: string): string => {
+    if (formula === 'x12/52/40') {
+      return 'Basic Salary × 12 ÷ 52 ÷ 40';
+    }
+    
+    // Replace 'x' with '×' and '/' with '÷' for display
+    return formula.replace(/x/g, '×').replace(/\//g, '÷');
   };
 
   const handleSalaryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -63,6 +133,33 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     const formattedValue = formatSalaryWithCommas(numericValue);
     setSalaryDisplayValue(formattedValue);
     onUpdateBasicSalary(numericValue);
+    
+    // Recalculate hourly rate if using formula
+    if (hourlyRateFormula) {
+      const newHourlyRate = parseHourlyRateFormula(hourlyRateFormula, numericValue);
+      setHourlyRateValue(newHourlyRate);
+      onUpdateHourlyRate?.(newHourlyRate);
+    }
+  };
+
+  const handleHourlyRateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setHourlyRateFormula(value);
+    
+    if (value) {
+      const newRate = parseHourlyRateFormula(value, settings.basicSalary || 0);
+      setHourlyRateValue(newRate);
+      onUpdateHourlyRate?.(newRate);
+    } else {
+      setHourlyRateValue(0);
+      onUpdateHourlyRate?.(0);
+    }
+  };
+
+  const handleOvertimeMultiplierChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseFloat(e.target.value) || 0;
+    setOvertimeMultiplier(value);
+    onUpdateOvertimeMultiplier?.(value);
   };
 
   const handleSalaryFocus = () => {
@@ -78,8 +175,12 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     return salaryDisplayValue || `${currencyOption.symbol} ${formatSalaryWithCommas(settings.basicSalary || 0)}`;
   };
 
-  const calculateAmount = (hours: number) => {
-    return hours * (settings?.hourlyRate || 0);
+  const getOvertimeRate = () => {
+    return hourlyRateValue * overtimeMultiplier;
+  };
+
+  const calculateShiftAmount = (normalHours: number, overtimeHours: number) => {
+    return (normalHours * hourlyRateValue) + (overtimeHours * getOvertimeRate());
   };
 
   const openAddShiftModal = () => {
@@ -127,10 +228,16 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     }, 100);
   };
 
-  const handleShiftHoursChange = (shiftId: string, hours: number) => {
+  const handleShiftHoursChange = (shiftId: string, normalHours: number, overtimeHours: number) => {
     const shift = settings.customShifts?.find(s => s.id === shiftId);
     if (shift) {
-      onUpdateCustomShift(shiftId, { ...shift, hours });
+      const updatedShift = {
+        ...shift,
+        normalHours: normalHours,
+        overtimeHours: overtimeHours,
+        hours: normalHours + overtimeHours // Keep total for compatibility
+      };
+      onUpdateCustomShift(shiftId, updatedShift);
     }
   };
 
@@ -152,28 +259,38 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   };
 
   // Track input values to prevent leading zeros
-  const [hoursInputValues, setHoursInputValues] = useState<Record<string, string>>({});
+  const [hoursInputValues, setHoursInputValues] = useState<Record<string, { normal: string; overtime: string }>>({});
 
-  const handleHoursInputChange = (shiftId: string, value: string) => {
+  const handleHoursInputChange = (shiftId: string, type: 'normal' | 'overtime', value: string) => {
     // Allow empty string or valid decimal numbers
     if (value === '' || /^\d*\.?\d*$/.test(value)) {
-      setHoursInputValues(prev => ({ ...prev, [shiftId]: value }));
+      setHoursInputValues(prev => ({
+        ...prev,
+        [shiftId]: {
+          ...prev[shiftId],
+          [type]: value
+        }
+      }));
       
       // Update the actual hours value
       const numericValue = value === '' ? 0 : parseFloat(value) || 0;
-      handleShiftHoursChange(shiftId, numericValue);
+      const currentShift = settings.customShifts?.find(s => s.id === shiftId);
+      if (currentShift) {
+        const normalHours = type === 'normal' ? numericValue : (currentShift.normalHours || 0);
+        const overtimeHours = type === 'overtime' ? numericValue : (currentShift.overtimeHours || 0);
+        handleShiftHoursChange(shiftId, normalHours, overtimeHours);
+      }
     }
   };
 
-  const handleHoursInputBlur = (shiftId: string, inputElement: HTMLInputElement) => {
-    const value = hoursInputValues[shiftId] || '';
+  const handleHoursInputBlur = (shiftId: string, type: 'normal' | 'overtime', inputElement: HTMLInputElement) => {
+    const value = hoursInputValues[shiftId]?.[type] || '';
     
     // If empty or zero, show as placeholder
     if (value === '' || value === '0') {
       inputElement.value = '';
       inputElement.placeholder = '0';
       inputElement.style.color = '#9CA3AF';
-      handleShiftHoursChange(shiftId, 0);
     } else {
       inputElement.style.color = '#374151';
       inputElement.placeholder = '';
@@ -182,20 +299,25 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     // Clean up the input state
     setHoursInputValues(prev => {
       const newValues = { ...prev };
-      delete newValues[shiftId];
+      if (newValues[shiftId]) {
+        delete newValues[shiftId][type];
+        if (Object.keys(newValues[shiftId]).length === 0) {
+          delete newValues[shiftId];
+        }
+      }
       return newValues;
     });
   };
 
-  const getHoursDisplayValue = (shift: any) => {
+  const getHoursDisplayValue = (shift: any, type: 'normal' | 'overtime') => {
     // If we're editing this field, show the input value
-    const inputValue = hoursInputValues[shift.id];
+    const inputValue = hoursInputValues[shift.id]?.[type];
     if (inputValue !== undefined) {
       return inputValue;
     }
     
     // For display, show empty if zero (will show placeholder)
-    const hours = shift.hours || 0;
+    const hours = type === 'normal' ? (shift.normalHours || 0) : (shift.overtimeHours || 0);
     return hours === 0 ? '' : hours.toString();
   };
 
@@ -207,7 +329,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     return settings.customShifts?.length || 0;
   };
 
-  // Mobile swipe handlers
+  // Mobile swipe handlers (keeping existing implementation)
   const handleTouchStart = (e: React.TouchEvent, shiftId: string) => {
     const touch = e.touches[0];
     const element = e.currentTarget as HTMLElement;
@@ -334,6 +456,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
       }
     });
   }, []);
+
   useEffect(() => {
     document.addEventListener('click', handleDocumentClick);
     document.addEventListener('touchstart', handleDocumentTouch);
@@ -342,6 +465,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
       document.removeEventListener('touchstart', handleDocumentTouch);
     };
   }, [handleDocumentClick, handleDocumentTouch]);
+
   // Show error if settings are not properly loaded
   if (!settings) {
     return (
@@ -394,9 +518,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         </div>
       </div>
 
-      {/* Basic Salary Section */}
+      {/* Salary and Rate Configuration */}
       <div className="mb-8 p-4 bg-gray-50 rounded-lg">
-        <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-4 text-center">Salary Configuration</h3>
+        <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-4 text-center">Salary & Rate Configuration</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2 text-center">
@@ -414,20 +538,67 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               />
             </div>
           </div>
+          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2 text-center">
-              Hourly Rate (Auto-calculated)
+              Hourly Rate
+            </label>
+            <div className="relative max-w-xs mx-auto mb-2">
+              <input
+                type="text"
+                value={hourlyRateFormula}
+                onChange={handleHourlyRateChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center text-base font-medium"
+                placeholder="x12/52/40 or direct value"
+              />
+            </div>
+            {hourlyRateFormula && (
+              <div className="text-xs text-gray-600 text-center mb-2">
+                Formula: {formatFormulaDisplay(hourlyRateFormula)}
+              </div>
+            )}
+            <div className="text-sm font-medium text-center text-indigo-600">
+              = {formatCurrency(hourlyRateValue)}
+            </div>
+          </div>
+        </div>
+        
+        {/* Overtime Rate */}
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2 text-center">
+              Overtime Rate Multiplier
+            </label>
+            <div className="relative max-w-xs mx-auto">
+              <input
+                type="number"
+                step="0.1"
+                min="1"
+                value={overtimeMultiplier}
+                onChange={handleOvertimeMultiplierChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center text-base font-medium"
+                placeholder="1.5"
+              />
+            </div>
+            <p className="text-xs text-gray-500 mt-2 text-center">
+              Standard overtime is 1.5x regular rate
+            </p>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2 text-center">
+              Overtime Rate
             </label>
             <div className="relative max-w-xs mx-auto">
               <input
                 type="text"
-                value={formatHourlyRate(settings.hourlyRate || 0)}
+                value={formatCurrency(getOvertimeRate())}
                 readOnly
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 text-center text-base font-medium"
               />
             </div>
             <p className="text-xs text-gray-500 mt-2 text-center">
-              Formula: Basic Salary × 12 ÷ 52 ÷ 40
+              Hourly Rate × Overtime Multiplier
             </p>
           </div>
         </div>
@@ -551,76 +722,101 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                       </div>
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-3 gap-3">
                       <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-1">Hours</label>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Normal Hours</label>
                         <input
                           type="text"
                           inputMode="decimal"
-                          value={getHoursDisplayValue(shift)}
-                          placeholder={shift.hours === 0 ? '0' : ''}
+                          value={getHoursDisplayValue(shift, 'normal')}
+                          placeholder={shift.normalHours === 0 ? '0' : ''}
                           onChange={(e) => {
                             const value = e.target.value;
-                            // Only allow digits and one decimal point
                             if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                              handleHoursInputChange(shift.id, value);
+                              handleHoursInputChange(shift.id, 'normal', value);
                             }
                           }}
                           onFocus={(e) => {
                             const input = e.target as HTMLInputElement;
-                            const currentValue = shift.hours || 0;
+                            const currentValue = shift.normalHours || 0;
                             
-                            // If the value is 0, keep it empty with placeholder
                             if (currentValue === 0) {
                               input.value = '';
                               input.placeholder = '0';
                               input.style.color = '#9CA3AF';
-                              setHoursInputValues(prev => ({ ...prev, [shift.id]: '' }));
+                              setHoursInputValues(prev => ({ 
+                                ...prev, 
+                                [shift.id]: { ...prev[shift.id], normal: '' }
+                              }));
                             } else {
                               input.value = currentValue.toString();
                               input.placeholder = '';
                               input.style.color = '#374151';
-                              setHoursInputValues(prev => ({ ...prev, [shift.id]: currentValue.toString() }));
+                              setHoursInputValues(prev => ({ 
+                                ...prev, 
+                                [shift.id]: { ...prev[shift.id], normal: currentValue.toString() }
+                              }));
                             }
                           }}
                           onBlur={(e) => {
-                            handleHoursInputBlur(shift.id, e.target as HTMLInputElement);
+                            handleHoursInputBlur(shift.id, 'normal', e.target as HTMLInputElement);
                           }}
                           className="w-full px-2 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center text-sm hours-input"
                           style={{
-                            color: shift.hours === 0 ? '#9CA3AF' : '#374151'
+                            color: (shift.normalHours || 0) === 0 ? '#9CA3AF' : '#374151'
                           }}
                         />
-                        <style jsx>{`
-                          .hours-input {
-                            -webkit-appearance: none !important;
-                            -moz-appearance: textfield !important;
-                            appearance: none !important;
-                          }
-                          .hours-input::-webkit-outer-spin-button,
-                          .hours-input::-webkit-inner-spin-button {
-                            -webkit-appearance: none !important;
-                            display: none !important;
-                            margin: 0 !important;
-                          }
-                          .hours-input[type=text] {
-                            -moz-appearance: textfield !important;
-                          }
-                          .hours-input::placeholder {
-                            text-align: center !important;
-                          }
-                          .hours-input::-webkit-input-placeholder {
-                            text-align: center !important;
-                          }
-                          .hours-input::-moz-placeholder {
-                            text-align: center !important;
-                          }
-                        `}</style>
                       </div>
+                      
                       <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-1">Amount</label>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Overtime Hours</label>
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={getHoursDisplayValue(shift, 'overtime')}
+                          placeholder={shift.overtimeHours === 0 ? '0' : ''}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                              handleHoursInputChange(shift.id, 'overtime', value);
+                            }
+                          }}
+                          onFocus={(e) => {
+                            const input = e.target as HTMLInputElement;
+                            const currentValue = shift.overtimeHours || 0;
+                            
+                            if (currentValue === 0) {
+                              input.value = '';
+                              input.placeholder = '0';
+                              input.style.color = '#9CA3AF';
+                              setHoursInputValues(prev => ({ 
+                                ...prev, 
+                                [shift.id]: { ...prev[shift.id], overtime: '' }
+                              }));
+                            } else {
+                              input.value = currentValue.toString();
+                              input.placeholder = '';
+                              input.style.color = '#374151';
+                              setHoursInputValues(prev => ({ 
+                                ...prev, 
+                                [shift.id]: { ...prev[shift.id], overtime: currentValue.toString() }
+                              }));
+                            }
+                          }}
+                          onBlur={(e) => {
+                            handleHoursInputBlur(shift.id, 'overtime', e.target as HTMLInputElement);
+                          }}
+                          className="w-full px-2 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center text-sm hours-input"
+                          style={{
+                            color: (shift.overtimeHours || 0) === 0 ? '#9CA3AF' : '#374151'
+                          }}
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Total Amount</label>
                         <span className="px-2 py-2 bg-gray-100 rounded text-center text-sm font-mono text-gray-700 block">
-                          {formatCurrency(calculateAmount(shift.hours || 0))}
+                          {formatCurrency(calculateShiftAmount(shift.normalHours || 0, shift.overtimeHours || 0))}
                         </span>
                       </div>
                     </div>
@@ -655,7 +851,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         </div>
       </div>
 
-
       {/* Add/Edit Shift Modal Component */}
       <AddShiftModal
         isOpen={showAddShift}
@@ -666,6 +861,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         onSave={handleSaveShift}
         editingShift={editingShift}
         settings={settings}
+        hourlyRate={hourlyRateValue}
+        overtimeRate={getOvertimeRate()}
       />
       
       {/* Toast Notification */}
@@ -676,6 +873,32 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         duration={3000}
         onClose={() => setToast(prev => ({ ...prev, isOpen: false }))}
       />
+      
+      <style jsx>{`
+        .hours-input {
+          -webkit-appearance: none !important;
+          -moz-appearance: textfield !important;
+          appearance: none !important;
+        }
+        .hours-input::-webkit-outer-spin-button,
+        .hours-input::-webkit-inner-spin-button {
+          -webkit-appearance: none !important;
+          display: none !important;
+          margin: 0 !important;
+        }
+        .hours-input[type=text] {
+          -moz-appearance: textfield !important;
+        }
+        .hours-input::placeholder {
+          text-align: center !important;
+        }
+        .hours-input::-webkit-input-placeholder {
+          text-align: center !important;
+        }
+        .hours-input::-moz-placeholder {
+          text-align: center !important;
+        }
+      `}</style>
     </div>
   );
 };

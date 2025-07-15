@@ -342,6 +342,21 @@ function App() {
     }));
   }, [setSettings]);
 
+  const updateHourlyRate = useCallback((rate: number) => {
+    console.log('⏰ Updating hourly rate:', rate);
+    setSettings(prev => ({
+      ...prev,
+      hourlyRate: rate
+    }));
+  }, [setSettings]);
+
+  const updateOvertimeMultiplier = useCallback((multiplier: number) => {
+    console.log('⏰ Updating overtime multiplier:', multiplier);
+    setSettings(prev => ({
+      ...prev,
+      overtimeMultiplier: multiplier
+    }));
+  }, [setSettings]);
   const updateShiftEnabled = useCallback((combinationId: string, enabled: boolean) => {
     console.log('✅ Updating shift enabled:', { combinationId, enabled });
     // This function is no longer needed as we only have custom shifts
@@ -607,6 +622,8 @@ function App() {
               onAddCustomShift={addCustomShift}
               onUpdateCustomShift={updateCustomShift}
               onDeleteCustomShift={deleteCustomShift}
+              onUpdateHourlyRate={updateHourlyRate}
+              onUpdateOvertimeMultiplier={updateOvertimeMultiplier}
             />
           ) : (
             <MenuPanel

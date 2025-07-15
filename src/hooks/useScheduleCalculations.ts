@@ -70,15 +70,25 @@ export const useScheduleCalculations = (
         const customShift = settings.customShifts.find(shift => shift.id === shiftId);
         
         if (customShift && settings.hourlyRate) {
-          const shiftAmount = customShift.hours * settings.hourlyRate;
+          // Calculate with normal and overtime hours if available
+          const normalHours = customShift.normalHours || 0;
+          const overtimeHours = customShift.overtimeHours || 0;
+          const overtimeRate = settings.hourlyRate * (settings.overtimeMultiplier || 1.5);
+          
+          const shiftAmount = (normalHours * settings.hourlyRate) + (overtimeHours * overtimeRate);
+          
+          // Fallback to old calculation if new fields not available
+          const fallbackAmount = customShift.hours * settings.hourlyRate;
+          const finalAmount = (normalHours > 0 || overtimeHours > 0) ? shiftAmount : fallbackAmount;
+          
           total += shiftAmount;
           
-          console.log(`💰 Found custom shift ${customShift.label} (${customShift.hours}h) = Rs ${shiftAmount.toFixed(2)}`);
+          console.log(`💰 Found custom shift ${customShift.label} (N:${normalHours}h, OT:${overtimeHours}h) = Rs ${finalAmount.toFixed(2)}`);
           
           // Check if this date is up to and INCLUDING today for month-to-date calculation
           if (workMonth === today.getMonth() && workYear === today.getFullYear() && workDate.getDate() <= today.getDate()) {
-            monthToDate += shiftAmount;
-            console.log(`📈 Added to month-to-date: Rs ${shiftAmount.toFixed(2)}`);
+            monthToDate += finalAmount;
+            console.log(`📈 Added to month-to-date: Rs ${finalAmount.toFixed(2)}`);
           }
         } else {
           console.log(`❌ No custom shift found for ${shiftId}`);

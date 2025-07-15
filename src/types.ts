@@ -25,6 +25,7 @@ export interface ShiftCombination {
 export interface Settings {
   basicSalary: number;
   hourlyRate: number;
+  overtimeMultiplier?: number;
   shiftCombinations: ShiftCombination[];
   currency: string;
   customShifts: CustomShift[];
@@ -36,6 +37,8 @@ export interface CustomShift {
   fromTime: string;
   toTime: string;
   hours: number;
+  normalHours?: number;
+  overtimeHours?: number;
   enabled: boolean;
   applicableDays?: {
     monday: boolean;
