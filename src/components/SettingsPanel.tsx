@@ -4,6 +4,7 @@ import { Settings, CustomShift } from '../types';
 import { CURRENCY_OPTIONS } from '../constants';
 import { AddShiftModal } from './AddShiftModal';
 import { ToastNotification } from './ToastNotification';
+import { SwipeableShiftCard } from './SwipeableShiftCard';
 
 interface SettingsPanelProps {
   settings: Settings;
