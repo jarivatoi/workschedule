@@ -3,7 +3,7 @@ import react from "@vitejs/plugin-react";
 import path from "path";
 
 export default defineConfig({
-  base: '/anwh/',
+  base: '/workschedule/',
   plugins: [react()],
   resolve: {
     alias: [{ find: "@", replacement: path.resolve(__dirname, "./src") }],
