@@ -285,11 +285,11 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
         {/* Custom Shifts */}
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">Custom Shifts</h3>
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Custom Shifts</h3>
             <button
               onClick={() => setIsAddShiftModalOpen(true)}
-              className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors duration-200 font-medium"
+              className="flex items-center justify-center space-x-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors duration-200 font-medium w-full"
             >
               <Plus className="w-4 h-4" />
               <span>Add Shift</span>
