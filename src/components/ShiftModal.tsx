@@ -400,11 +400,12 @@ export const ShiftModal: React.FC<ShiftModalProps> = ({
                         </div>
                         <div className="flex-1">
                         <div className="font-semibold select-none">{shift.label}</div>
+                        <div className="text-sm opacity-75 select-none">{shift.time}</div>
                           <div className="text-xs text-gray-600 select-none">{shift.hours}h</div>
                         </div>
                       </div>
                       {isDisabled && selectedShifts.length >= 3 && (
-                            <div className="text-center select-none truncate px-0.5">{customShift ? customShift.label : shiftId}</div>
+                        <div className="text-xs text-red-500 select-none">
                           Maximum 3 shifts allowed
                         </div>
                       )}
