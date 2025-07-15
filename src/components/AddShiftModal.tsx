@@ -401,7 +401,7 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
               `}</style>
             </div>
             
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center justify-center space-x-4">
               <div className="flex items-center space-x-2">
                 <label className="text-sm font-medium text-gray-700 whitespace-nowrap">From:</label>
                 <input
@@ -438,6 +438,7 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-3">Applicable Days</label>
+              <label className="block text-sm font-medium text-gray-700 mb-3 text-center">Applicable Days</label>
               <div className="grid grid-cols-2 gap-2">
                 {[
                   { key: 'monday', label: 'Monday' },
