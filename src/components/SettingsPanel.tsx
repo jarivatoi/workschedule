@@ -82,7 +82,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   };
 
   const parseSalaryFromDisplay = (displayValue: string) => {
-    return parseInt(displayValue.replace(/[^\d,]/g, ''), 10) || 0;
+    // Remove commas and parse as integer
+    return parseInt(displayValue.replace(/,/g, ''), 10) || 0;
   };
 
   const parseHourlyRateFormula = (formula: string, basicSalary: number): number => {
@@ -128,7 +129,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
   const handleSalaryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
-    const cleanValue = inputValue.replace(/[^\d,]/g, '');
+    const cleanValue = inputValue.replace(/[^\d]/g, ''); // Remove everything except digits
     const numericValue = parseSalaryFromDisplay(cleanValue);
     
     // Validate maximum 7 digits (9,999,999)
@@ -136,8 +137,14 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
       return; // Don't update if exceeds maximum
     }
     
-    const formattedValue = formatSalaryWithCommas(numericValue);
-    setSalaryDisplayValue(formattedValue);
+    // Only format if there's a value
+    if (numericValue > 0) {
+      const formattedValue = formatSalaryWithCommas(numericValue);
+      setSalaryDisplayValue(formattedValue);
+    } else {
+      setSalaryDisplayValue('');
+    }
+    
     onUpdateBasicSalary(numericValue);
     
     // Recalculate hourly rate if using formula
@@ -169,7 +176,12 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   };
 
   const handleSalaryFocus = () => {
-    setSalaryDisplayValue(formatSalaryWithCommas(settings.basicSalary || 0));
+    const currentValue = settings.basicSalary || 0;
+    if (currentValue > 0) {
+      setSalaryDisplayValue(formatSalaryWithCommas(currentValue));
+    } else {
+      setSalaryDisplayValue('');
+    }
   };
 
   const handleSalaryBlur = () => {
@@ -177,8 +189,14 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   };
 
   const getSalaryInputValue = () => {
-    const currencyOption = CURRENCY_OPTIONS.find(c => c.code === settings.currency) || { symbol: 'Rs' };
-    return salaryDisplayValue || `${currencyOption.symbol} ${formatSalaryWithCommas(settings.basicSalary || 0)}`;
+    // If we're actively editing, show the display value
+    if (salaryDisplayValue) {
+      return salaryDisplayValue;
+    }
+    
+    // Otherwise show the formatted current value
+    const currentValue = settings.basicSalary || 0;
+    return currentValue > 0 ? formatSalaryWithCommas(currentValue) : '';
   };
 
   const getOvertimeRate = () => {
@@ -533,14 +551,19 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               Basic Salary (Monthly)
             </label>
             <div className="relative max-w-xs mx-auto">
+              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none z-10">
+                {CURRENCY_OPTIONS.find(c => c.code === settings.currency)?.symbol || 'Rs'}
+              </div>
               <input
                 type="text"
+                inputMode="numeric"
                 value={getSalaryInputValue()}
                 onChange={handleSalaryChange}
                 onFocus={handleSalaryFocus}
                 onBlur={handleSalaryBlur}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center text-base font-medium"
-                placeholder="Maximum: 9,999,999"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-right text-base font-medium"
+                placeholder="0"
+                maxLength="9"
               />
               <p className="text-xs text-gray-500 mt-1 text-center">
                 Maximum: 9,999,999
@@ -553,12 +576,15 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               Hourly Rate
             </label>
             <div className="relative max-w-xs mx-auto mb-2">
+              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none z-10">
+                Basic Salary
+              </div>
               <input
                 type="text"
                 value={hourlyRateFormula}
                 onChange={handleHourlyRateChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center text-base font-medium"
-                placeholder="Basic Salary"
+                className="w-full pl-24 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-left text-base font-medium"
+                placeholder=""
                 style={{
                   color: hourlyRateFormula ? '#374151' : '#9CA3AF'
                 }}
