@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Clock, Calculator, DollarSign, Edit, Trash2 } from 'lucide-react';
+import { Clock, Calculator, Edit, Trash2 } from 'lucide-react';
 
 interface SwipeableShiftCardProps {
   shift: any;
@@ -26,35 +26,35 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
   const startX = useRef(0);
   const startY = useRef(0);
   const currentX = useRef(0);
-  const isHorizontalSwipe = useRef(false);
+  const isHorizontalGesture = useRef(false);
+  const dragStarted = useRef(false);
 
   const SWIPE_THRESHOLD = 50;
   const MAX_SWIPE = 120;
 
-  // Handle touch start
-  const handleTouchStart = (e: React.TouchEvent) => {
-    const touch = e.touches[0];
-    startX.current = touch.clientX;
-    startY.current = touch.clientY;
-    currentX.current = touch.clientX;
+  // Universal start handler (works for both mouse and touch)
+  const handleStart = (clientX: number, clientY: number) => {
+    startX.current = clientX;
+    startY.current = clientY;
+    currentX.current = clientX;
     setIsDragging(true);
-    isHorizontalSwipe.current = false;
+    isHorizontalGesture.current = false;
+    dragStarted.current = false;
   };
 
-  // Handle touch move
-  const handleTouchMove = (e: React.TouchEvent) => {
+  // Universal move handler (works for both mouse and touch)
+  const handleMove = (clientX: number, clientY: number) => {
     if (!isDragging) return;
 
-    const touch = e.touches[0];
-    currentX.current = touch.clientX;
+    currentX.current = clientX;
     
     const deltaX = startX.current - currentX.current;
-    const deltaY = Math.abs(startY.current - touch.clientY);
+    const deltaY = Math.abs(startY.current - clientY);
     
-    // Determine if this is a horizontal swipe
-    if (Math.abs(deltaX) > 10 && Math.abs(deltaX) > deltaY * 2) {
-      isHorizontalSwipe.current = true;
-      e.preventDefault(); // Prevent scrolling when swiping horizontally
+    // Determine if this is a horizontal gesture
+    if (Math.abs(deltaX) > 10 && Math.abs(deltaX) > deltaY * 1.5) {
+      isHorizontalGesture.current = true;
+      dragStarted.current = true;
       
       // Only allow left swipe (positive deltaX)
       if (deltaX > 0) {
@@ -66,11 +66,11 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
     }
   };
 
-  // Handle touch end
-  const handleTouchEnd = () => {
+  // Universal end handler (works for both mouse and touch)
+  const handleEnd = () => {
     setIsDragging(false);
     
-    if (isHorizontalSwipe.current) {
+    if (isHorizontalGesture.current && dragStarted.current) {
       if (translateX > SWIPE_THRESHOLD) {
         // Show actions
         setTranslateX(MAX_SWIPE);
@@ -82,7 +82,49 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
       }
     }
     
-    isHorizontalSwipe.current = false;
+    isHorizontalGesture.current = false;
+    dragStarted.current = false;
+  };
+
+  // Touch event handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    handleStart(touch.clientX, touch.clientY);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    
+    // Prevent default only for horizontal gestures to allow vertical scrolling
+    if (isHorizontalGesture.current && dragStarted.current) {
+      e.preventDefault();
+    }
+    
+    handleMove(touch.clientX, touch.clientY);
+  };
+
+  const handleTouchEnd = () => {
+    handleEnd();
+  };
+
+  // Mouse event handlers
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent text selection
+    handleStart(e.clientX, e.clientY);
+    
+    // Add global mouse event listeners
+    const handleMouseMove = (event: MouseEvent) => {
+      handleMove(event.clientX, event.clientY);
+    };
+    
+    const handleMouseUp = () => {
+      handleEnd();
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+    
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
   };
 
   // Reset swipe
@@ -92,13 +134,13 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
   };
 
   // Handle action clicks
-  const handleEdit = (e: React.MouseEvent) => {
+  const handleEdit = (e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
     resetSwipe();
     onEdit();
   };
 
-  const handleDelete = (e: React.MouseEvent) => {
+  const handleDelete = (e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
     resetSwipe();
     onDelete();
@@ -127,7 +169,7 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
       ref={cardRef}
       className="relative bg-white border border-gray-200 rounded-lg overflow-hidden select-none"
       style={{
-        touchAction: 'pan-y', // Allow vertical scrolling
+        touchAction: 'pan-y', // Allow vertical scrolling, prevent horizontal pan
         userSelect: 'none',
         WebkitUserSelect: 'none'
       }}
@@ -144,6 +186,7 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
       >
         <button
           onClick={handleEdit}
+          onTouchEnd={handleEdit}
           className="flex-1 bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center transition-colors duration-200"
           style={{ minWidth: '60px' }}
         >
@@ -151,6 +194,7 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
         </button>
         <button
           onClick={handleDelete}
+          onTouchEnd={handleDelete}
           className="flex-1 bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-colors duration-200"
           style={{ minWidth: '60px' }}
         >
@@ -171,6 +215,7 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
+        onMouseDown={handleMouseDown}
         onClick={resetSwipe}
       >
         {/* Shift Header */}
@@ -213,7 +258,6 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
             )}
           </div>
         </div>
-
       </div>
     </div>
   );
