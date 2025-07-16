@@ -306,58 +306,15 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           ) : (
             <div className="grid grid-cols-1 gap-4">
               {settings.customShifts.map((shift) => (
-                <div
+                <SwipeableShiftCard
                   key={shift.id}
-                  className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow duration-200"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <h4 className="font-semibold text-gray-800">{shift.label}</h4>
-                        <span className="text-xs px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full font-medium">
-                          {shift.hours}h total
-                        </span>
-                      </div>
-                      <div className="flex items-center space-x-4 text-sm text-gray-600">
-                        <div className="flex items-center space-x-1">
-                          <Clock className="w-4 h-4" />
-                          <span>{formatTime(shift.fromTime)} - {formatTime(shift.toTime)}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <Calculator className="w-4 h-4" />
-                          <span>
-                            N: {shift.normalHours || 0}h, OT: {shift.overtimeHours || 0}h
-                          </span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <DollarSign className="w-4 h-4" />
-                          <span>
-                            {formatCurrency(
-                              (shift.normalHours || 0) * (settings.hourlyRate || 0) +
-                              (shift.overtimeHours || 0) * ((settings.hourlyRate || 0) * (settings.overtimeMultiplier || 1.5))
-                            )}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => handleEditShift(shift)}
-                        className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors duration-200"
-                        title="Edit shift"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteShift(shift.id)}
-                        className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
-                        title="Delete shift"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                  shift={shift}
+                  settings={settings}
+                  onEdit={() => handleEditShift(shift)}
+                  onDelete={() => handleDeleteShift(shift.id)}
+                  formatTime={formatTime}
+                  formatCurrency={formatCurrency}
+                />
               ))}
             </div>
           )}
