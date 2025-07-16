@@ -57,30 +57,38 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
     if (!isDragging) return;
 
     currentX.current = clientX;
-    const deltaX = startX.current - currentX.current; // Left swipe = positive
+    const deltaX = currentX.current - startX.current; // Right movement = positive, Left movement = negative
     const deltaY = Math.abs(startY.current - clientY);
     
-    console.log('🎯 Move:', { deltaX, deltaY, isDragging });
+    console.log('🎯 Move:', { 
+      deltaX, 
+      deltaY, 
+      isDragging, 
+      startX: startX.current, 
+      currentX: currentX.current,
+      direction: deltaX > 0 ? 'right' : 'left'
+    });
     
     // Determine if this is a horizontal gesture
     if (Math.abs(deltaX) > 5 && Math.abs(deltaX) > deltaY) {
       isHorizontalGesture.current = true;
       dragStarted.current = true;
       
-      // Only allow left swipe (positive deltaX)
-      if (deltaX > 0) {
-        const clampedOffset = Math.min(deltaX, MAX_SWIPE);
+      // Only allow left swipe (negative deltaX, but we want positive translateX)
+      if (deltaX < 0) {
+        const clampedOffset = Math.min(Math.abs(deltaX), MAX_SWIPE);
         setTranslateX(clampedOffset);
-        console.log('🎯 Setting translateX:', clampedOffset);
+        console.log('🎯 Setting translateX:', clampedOffset, 'from deltaX:', deltaX);
       } else {
         setTranslateX(0);
+        console.log('🎯 Resetting translateX (wrong direction)');
       }
     }
   };
 
   // Universal end handler
   const handleEnd = () => {
-    console.log('🎯 End drag, translateX:', translateX, 'threshold:', SWIPE_THRESHOLD);
+    console.log('🎯 End drag, translateX:', translateX, 'threshold:', SWIPE_THRESHOLD, 'showActions will be:', translateX > SWIPE_THRESHOLD);
     setIsDragging(false);
     
     if (isHorizontalGesture.current && dragStarted.current) {
@@ -224,11 +232,13 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
       <div
         className="relative bg-white p-4 cursor-pointer select-none"
         style={{
-          transform: `translateX(-${translateX}px)`,
+          transform: `translateX(-${translateX}px)`, // Negative because we want card to move left
           transition: isDragging ? 'none' : 'transform 0.3s ease-out',
           userSelect: 'none',
           WebkitUserSelect: 'none',
-          zIndex: 2
+          zIndex: 2,
+          // Add visual debugging
+          border: isDragging ? '2px solid red' : 'none'
         }}
         onMouseDown={handleMouseDown}
         onTouchStart={handleTouchStart}
