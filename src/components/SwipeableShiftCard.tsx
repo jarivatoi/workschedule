@@ -58,6 +58,8 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
 
       {/* Main card content */}
       <div
+        onClick={toggleActions}
+        className="cursor-pointer"
       >
         {/* Shift Header */}
         <div className="flex items-center justify-between mb-3">
