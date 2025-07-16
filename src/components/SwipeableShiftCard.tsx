@@ -173,6 +173,19 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
         onDoubleClick={handleDoubleClick}
         onClick={closeActions}
       >
+        {/* DEBUG: Manual test button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            console.log('🧪 Manual test - setting offset to 60px');
+            setOffset(60);
+            setShowActions(true);
+          }}
+          className="absolute top-2 right-2 bg-yellow-500 text-white px-2 py-1 text-xs rounded z-50"
+        >
+          TEST
+        </button>
+
         {/* Shift Header */}
         <div className="flex items-center justify-between mb-3">
           <h4 className="font-semibold text-gray-800 text-lg">{shift.label}</h4>
