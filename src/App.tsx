@@ -99,38 +99,54 @@ function App() {
 
   // Initialize Add to Home Screen functionality
   useEffect(() => {
-    // Wait for app to fully load before showing add to homescreen
+    // Initialize Add to Homescreen after app loads
     if (!isLoading) {
       console.log('🏠 Initializing Add to Homescreen...');
       
-      // Create AddToHomescreen instance
-      const addToHomescreenInstance = new AddToHomescreen({
-        appName: 'Work Schedule',
-        appIconUrl: 'https://jarivatoi.github.io/anwh/icon.svg',
-        maxModalDisplayCount: 3,
-        skipFirstVisit: false,
-        startDelay: 2000,
-        lifespan: 20000,
-        displayPace: 1440,
-        mustShowCustomPrompt: false
-      });
-
-      console.log('📱 Add to Homescreen instance created');
-      
-      // Show prompt after delay if user can install
+      // Wait a bit more for everything to settle
       setTimeout(() => {
-        console.log('⏰ Checking if can prompt...');
-        if (addToHomescreenInstance.canPrompt()) {
-          console.log('✅ Showing Add to Homescreen prompt');
-          addToHomescreenInstance.show();
-        } else {
-          console.log('❌ Cannot show Add to Homescreen prompt');
-          console.log('Debug info:', {
-            isStandalone: addToHomescreenInstance.isStandalone(),
+        try {
+          // Create AddToHomescreen instance with corrected settings
+          const addToHomescreenInstance = new AddToHomescreen({
+            appName: 'Work Schedule',
+            appIconUrl: 'https://jarivatoi.github.io/workschedule/Icon.PNG', // Fixed URL
+            maxModalDisplayCount: 5, // Increased attempts
+            skipFirstVisit: false, // Always show on first visit
+            startDelay: 1000, // Reduced delay
+            lifespan: 30000, // Longer display time
+            displayPace: 1440,
+            mustShowCustomPrompt: true // Force show even if conditions aren't perfect
+          });
+
+          console.log('📱 Add to Homescreen instance created');
+          
+          // Check device and show prompt
+          const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+          const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                              (window.navigator as any).standalone === true;
+          
+          console.log('📱 Device info:', {
+            isMobile,
+            isStandalone,
+            userAgent: navigator.userAgent,
             canPrompt: addToHomescreenInstance.canPrompt()
           });
+          
+          // Show prompt with more aggressive conditions
+          if (isMobile && !isStandalone) {
+            console.log('✅ Showing Add to Homescreen prompt');
+            addToHomescreenInstance.show();
+          } else if (!isMobile) {
+            console.log('💻 Desktop detected - showing desktop-friendly prompt');
+            addToHomescreenInstance.show(); // Show on desktop too for testing
+          } else {
+            console.log('❌ App already installed or conditions not met');
+          }
+          
+        } catch (error) {
+          console.error('❌ Error initializing Add to Homescreen:', error);
         }
-      }, 2000);
+      }, 3000); // Wait 3 seconds after loading completes
     }
   }, [isLoading]);
 

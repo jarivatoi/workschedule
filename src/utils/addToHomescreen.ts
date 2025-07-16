@@ -49,7 +49,7 @@ export class AddToHomescreen {
       startDelay: 2000,
       lifespan: 15000,
       displayPace: 1440, // 24 hours in minutes
-      mustShowCustomPrompt: false,
+      mustShowCustomPrompt: true, // Force show by default
       ...options
     };
     
@@ -113,28 +113,37 @@ export class AddToHomescreen {
   }
 
   canPrompt(): boolean {
-    // Enhanced logic like philfung
+    // More permissive logic for better prompt showing
     const canShow = !this.isStandaloneMode && 
-                   this.modalDisplayCount < this.maxModalDisplayCount &&
-                   this.isMobile;
+                   this.modalDisplayCount < this.maxModalDisplayCount;
     
     console.log('✅ Can Prompt Check:', {
       isStandalone: this.isStandaloneMode,
       displayCount: this.modalDisplayCount,
       maxCount: this.maxModalDisplayCount,
-      isMobile: this.isMobile,
+      isMobile: this.isMobile, 
+      mustShow: this.options.mustShowCustomPrompt,
       canShow
     });
     
-    return canShow || this.options.mustShowCustomPrompt;
+    // Show if conditions are met OR if forced
+    return canShow || this.options.mustShowCustomPrompt === true;
   }
 
   show(customMessage?: string): void {
-    if (!this.canPrompt() && !this.options.mustShowCustomPrompt) {
-      console.log('🚫 AddToHomescreen: Cannot show prompt');
+    console.log('🚀 Attempting to show Add to Homescreen prompt...');
+    
+    if (!this.canPrompt()) {
+      console.log('🚫 AddToHomescreen: Cannot show prompt', {
+        canPrompt: this.canPrompt(),
+        mustShow: this.options.mustShowCustomPrompt,
+        displayCount: this.modalDisplayCount,
+        maxCount: this.maxModalDisplayCount
+      });
       return;
     }
 
+    console.log('✅ Showing Add to Homescreen modal');
     this.modalDisplayCount++;
     localStorage.setItem('addToHomescreenModalCount', this.modalDisplayCount.toString());
 
@@ -146,6 +155,7 @@ export class AddToHomescreen {
     this.modalDisplayCount = 0;
     localStorage.removeItem('addToHomescreenModalCount');
     localStorage.removeItem('addToHomescreenFirstVisit');
+    console.log('🧹 Cleared Add to Homescreen display count');
   }
 
   private getDefaultMessage(): string {
