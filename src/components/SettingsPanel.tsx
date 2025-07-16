@@ -195,9 +195,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             </div>
             <input
               type="text"
-              defaultValue={settings.basicSalary.toLocaleString('en-US')} // No decimals
+              defaultValue={hourlyRateValue}
               onChange={handleBasicSalaryChange}
-              onFocus={handleBasicSalaryFocus}
+              step="5"
               onBlur={handleBasicSalaryBlur}
               placeholder="0"
               className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center text-lg"
