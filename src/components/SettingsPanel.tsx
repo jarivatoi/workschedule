@@ -120,8 +120,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   const handleHourlyRateBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     // Format to 2 decimal places when focus is lost
     const numericValue = parseFloat(e.target.value) || 0;
-    setHourlyRateValue(value);
-    onUpdateHourlyRate?.(value);
+    setHourlyRateValue(numericValue);
+    onUpdateHourlyRate?.(numericValue);
     e.target.value = numericValue.toFixed(2);
   };
 
