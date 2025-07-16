@@ -102,11 +102,6 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
           </div>
         </div>
 
-        {/* Instructions */}
-        <div className="mt-2 text-center text-xs text-gray-500 select-none">
-          {showActions ? 'Tap Edit or Delete' : 'Tap to show actions'}
-        </div>
-
         {/* Visual indicator when actions are shown */}
         {showActions && (
           <div className="absolute top-2 right-2 w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
