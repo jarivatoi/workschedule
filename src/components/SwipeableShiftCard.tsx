@@ -28,6 +28,7 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
   const currentX = useRef(0);
   const isHorizontalGesture = useRef(false);
   const dragStarted = useRef(false);
+  const isDragging = useRef(false);
 
   const SWIPE_THRESHOLD = 50;
   const MAX_SWIPE = 120;
@@ -144,40 +145,38 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
   const handleTouchMove = (e: React.TouchEvent) => {
     const touch = e.touches[0];
     
-    // Prevent default only for horizontal gestures
-    if (isHorizontalGesture.current && dragStarted.current) {
-      e.preventDefault();
-    }
-    
-    handleMove(touch.clientX, touch.clientY);
-  };
-
-  const handleTouchEnd = () => {
-    console.log('👆 Touch end');
-    handleEnd();
-  };
-
-  // Handle action clicks
-  const handleEdit = (e: React.MouseEvent | React.TouchEvent) => {
-    e.stopPropagation();
-    console.log('✏️ Edit clicked');
-    resetSwipe();
-    onEdit();
-  };
-
-  const handleDelete = (e: React.MouseEvent | React.TouchEvent) => {
-    e.stopPropagation();
-    console.log('🗑️ Delete clicked');
-    resetSwipe();
-    onDelete();
-  };
-
-  // Close swipe when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
-      if (cardRef.current && !cardRef.current.contains(event.target as Node)) {
-        resetSwipe();
-      }
+    // Simple test - just log mouse events
+    const handleMouseDown = (e: MouseEvent) => {
+      console.log('🖱️ MOUSE DOWN - This should appear when you click!');
+      isDragging.current = true;
+      startX.current = e.clientX;
+      
+      // Change background color to show it's working
+      cardElement.style.backgroundColor = 'red';
+      
+      const handleMouseMove = (e: MouseEvent) => {
+        if (!isDragging.current) return;
+        console.log('🖱️ MOUSE MOVE - coordinates changing:', e.clientX);
+        
+        // Simple movement test
+        const deltaX = e.clientX - startX.current;
+        console.log('🎯 DELTA X:', deltaX);
+        
+        // Move the card
+        cardElement.style.transform = `translateX(${deltaX}px)`;
+      };
+      
+      const handleMouseUp = () => {
+        console.log('🖱️ MOUSE UP - drag ended');
+        isDragging.current = false;
+        cardElement.style.backgroundColor = '';
+        cardElement.style.transform = '';
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+      
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
     };
 
     if (showActions) {
@@ -236,7 +235,9 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
           transition: isDragging ? 'none' : 'transform 0.3s ease-out',
           userSelect: 'none',
           WebkitUserSelect: 'none',
-          zIndex: 2,
+          cursor: isDragging ? 'grabbing' : 'grab',
+          // Add a visible border to make sure we're clicking the right element
+          border: '2px solid blue'
           // Add visual debugging
           border: isDragging ? '2px solid red' : 'none'
         }}
