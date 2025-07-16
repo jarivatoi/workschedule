@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Calculator, Edit3, TrendingUp, Trash2, AlertTriangle, X } from 'lucide-react';
 import { gsap } from 'gsap';
 import { SHIFTS } from '../constants';
@@ -647,93 +648,99 @@ export const Calendar: React.FC<CalendarProps> = ({
 
       {/* Date Picker Modal - NOW CENTERED VERTICALLY LIKE OTHER MODALS */}
       {showDatePicker && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center p-4 z-50"
-          onClick={handleDatePickerBackdropClick}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            zIndex: 9999,
-            // CRITICAL: Enable touch scrolling on the backdrop
-            WebkitOverflowScrolling: 'touch',
-            touchAction: 'pan-y', // Allow vertical panning (scrolling)
-            // Position modal 1/3 from top
-            paddingTop: '33.333vh' // 1/3 of viewport height from top
-          }}
-        >
+        createPortal(
           <div 
-            className="bg-white rounded-2xl shadow-2xl max-w-md w-full select-none" 
-            style={{ 
-              userSelect: 'none', 
-              WebkitUserSelect: 'none',
-              // Ensure modal doesn't exceed remaining space
-              maxHeight: '60vh', // Leave space for 1/3 top + some bottom margin
-              marginTop: 0 // Remove default margin since we're using paddingTop
-            }}
-            onClick={(e) => {
-              // Prevent modal from closing when clicking inside
-              e.stopPropagation();
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[99999]"
+            onClick={handleDatePickerBackdropClick}
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 99999,
+              // CRITICAL: Enable touch scrolling on the backdrop
+              WebkitOverflowScrolling: 'touch',
+              touchAction: 'pan-y', // Allow vertical panning (scrolling)
+              // Perfect centering - no padding adjustments
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}
           >
-            {/* Header with close button */}
-            <div className="relative p-6 pb-4 border-b border-gray-200">
-              <button
-                onClick={() => setShowDatePicker(false)}
-                className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors duration-200 select-none"
-                style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
-              >
-                <X className="w-5 h-5" />
-              </button>
-              
-              {/* Title - centered */}
-              <div className="text-center">
-                <h3 className="text-xl font-bold text-gray-900 mb-1 select-none">
-                  Select Month & Year
-                </h3>
+            <div 
+              className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 select-none" 
+              style={{ 
+                userSelect: 'none', 
+                WebkitUserSelect: 'none',
+                // Ensure modal doesn't exceed screen height
+                maxHeight: '90vh',
+                // Perfect centering with margin auto
+                margin: '0 auto'
+              }}
+              onClick={(e) => {
+                // Prevent modal from closing when clicking inside
+                e.stopPropagation();
+              }}
+            >
+              {/* Header with close button */}
+              <div className="relative p-6 pb-4 border-b border-gray-200">
+                <button
+                  onClick={() => setShowDatePicker(false)}
+                  className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors duration-200 select-none"
+                  style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
+                >
+                  <X className="w-5 h-5" />
+                </button>
+                
+                {/* Title - centered */}
+                <div className="text-center">
+                  <h3 className="text-xl font-bold text-gray-900 mb-1 select-none">
+                    Select Month & Year
+                  </h3>
+                </div>
               </div>
-            </div>
 
-            {/* Content */}
-            <div className="p-6">
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2 text-center select-none">Year</label>
-                  <select
-                    value={currentYear}
-                    onChange={(e) => handleDatePickerChange(Number(e.target.value), currentMonth)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center transition-colors duration-200"
-                  >
-                    {Array.from({ length: 10 }, (_, i) => currentYear - 5 + i).map(year => (
-                      <option key={year} value={year}>{year}</option>
-                    ))}
-                  </select>
+              {/* Content */}
+              <div className="p-6">
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2 text-center select-none">Year</label>
+                    <select
+                      value={currentYear}
+                      onChange={(e) => handleDatePickerChange(Number(e.target.value), currentMonth)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center transition-colors duration-200"
+                    >
+                      {Array.from({ length: 10 }, (_, i) => currentYear - 5 + i).map(year => (
+                        <option key={year} value={year}>{year}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2 text-center select-none">Month</label>
+                    <select
+                      value={currentMonth}
+                      onChange={(e) => handleDatePickerChange(currentYear, Number(e.target.value))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center transition-colors duration-200"
+                    >
+                      {monthNames.map((month, index) => (
+                        <option key={index} value={index}>{month}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2 text-center select-none">Month</label>
-                  <select
-                    value={currentMonth}
-                    onChange={(e) => handleDatePickerChange(currentYear, Number(e.target.value))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center transition-colors duration-200"
-                  >
-                    {monthNames.map((month, index) => (
-                      <option key={index} value={index}>{month}</option>
-                    ))}
-                  </select>
-                </div>
+                <button
+                  onClick={() => setShowDatePicker(false)}
+                  className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition-colors duration-200 active:scale-95 select-none"
+                  style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
+                >
+                  <span className="select-none">Close</span>
+                </button>
               </div>
-              <button
-                onClick={() => setShowDatePicker(false)}
-                className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition-colors duration-200 active:scale-95 select-none"
-                style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
-              >
-                <span className="select-none">Close</span>
-              </button>
             </div>
-          </div>
-        </div>
+          </div>,
+          document.body
+        )
       )}
 
       {/* Calendar Body */}
