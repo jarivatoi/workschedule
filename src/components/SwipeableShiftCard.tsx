@@ -40,6 +40,8 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
     setIsDragging(true);
     isHorizontalGesture.current = false;
     dragStarted.current = false;
+    
+    console.log('🖱️ Drag started at:', { x: clientX, y: clientY });
   };
 
   // Universal move handler (works for both mouse and touch)
@@ -51,8 +53,10 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
     const deltaX = startX.current - currentX.current;
     const deltaY = Math.abs(startY.current - clientY);
     
+    console.log('🖱️ Drag move:', { deltaX, deltaY, isDragging });
+    
     // Determine if this is a horizontal gesture
-    if (Math.abs(deltaX) > 10 && Math.abs(deltaX) > deltaY * 1.5) {
+    if (Math.abs(deltaX) > 5 && Math.abs(deltaX) > deltaY) {
       isHorizontalGesture.current = true;
       dragStarted.current = true;
       
@@ -60,6 +64,7 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
       if (deltaX > 0) {
         const clampedOffset = Math.min(deltaX, MAX_SWIPE);
         setTranslateX(clampedOffset);
+        console.log('🖱️ Setting translateX:', clampedOffset);
       } else {
         setTranslateX(0);
       }
@@ -68,6 +73,7 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
 
   // Universal end handler (works for both mouse and touch)
   const handleEnd = () => {
+    console.log('🖱️ Drag ended, translateX:', translateX);
     setIsDragging(false);
     
     if (isHorizontalGesture.current && dragStarted.current) {
@@ -75,10 +81,12 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
         // Show actions
         setTranslateX(MAX_SWIPE);
         setShowActions(true);
+        console.log('🖱️ Showing actions');
       } else {
         // Snap back
         setTranslateX(0);
         setShowActions(false);
+        console.log('🖱️ Snapping back');
       }
     }
     
@@ -109,15 +117,18 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
 
   // Mouse event handlers
   const handleMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent text selection
+    e.preventDefault();
+    console.log('🖱️ Mouse down event');
     handleStart(e.clientX, e.clientY);
     
     // Add global mouse event listeners
     const handleMouseMove = (event: MouseEvent) => {
+      event.preventDefault();
       handleMove(event.clientX, event.clientY);
     };
     
     const handleMouseUp = () => {
+      console.log('🖱️ Mouse up event');
       handleEnd();
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
@@ -169,9 +180,10 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
       ref={cardRef}
       className="relative bg-white border border-gray-200 rounded-lg overflow-hidden select-none"
       style={{
-        touchAction: 'pan-y', // Allow vertical scrolling, prevent horizontal pan
+        touchAction: 'none', // Disable default touch behaviors for better control
         userSelect: 'none',
-        WebkitUserSelect: 'none'
+        WebkitUserSelect: 'none',
+        cursor: isDragging ? 'grabbing' : 'grab'
       }}
     >
       {/* Action buttons background */}
