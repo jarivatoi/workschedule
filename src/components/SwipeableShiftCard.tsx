@@ -144,41 +144,33 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
 
   const handleTouchMove = (e: React.TouchEvent) => {
     const touch = e.touches[0];
-    
-    // Simple test - just log mouse events
-    const handleMouseDown = (e: MouseEvent) => {
-      console.log('🖱️ MOUSE DOWN - This should appear when you click!');
-      isDragging.current = true;
-      startX.current = e.clientX;
-      
-      // Change background color to show it's working
-      cardElement.style.backgroundColor = 'red';
-      
-      const handleMouseMove = (e: MouseEvent) => {
-        if (!isDragging.current) return;
-        console.log('🖱️ MOUSE MOVE - coordinates changing:', e.clientX);
-        
-        // Simple movement test
-        const deltaX = e.clientX - startX.current;
-        console.log('🎯 DELTA X:', deltaX);
-        
-        // Move the card
-        cardElement.style.transform = `translateX(${deltaX}px)`;
-      };
-      
-      const handleMouseUp = () => {
-        console.log('🖱️ MOUSE UP - drag ended');
-        isDragging.current = false;
-        cardElement.style.backgroundColor = '';
-        cardElement.style.transform = '';
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-      };
-      
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-    };
+    handleMove(touch.clientX, touch.clientY);
+  };
 
+  const handleTouchEnd = () => {
+    console.log('👆 Touch end');
+    handleEnd();
+  };
+
+  const handleEdit = (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();
+    onEdit();
+    resetSwipe();
+  };
+
+  const handleDelete = (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();
+    onDelete();
+    resetSwipe();
+  };
+
+  const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+    if (cardRef.current && !cardRef.current.contains(e.target as Node)) {
+      resetSwipe();
+    }
+  };
+
+  useEffect(() => {
     if (showActions) {
       document.addEventListener('mousedown', handleClickOutside);
       document.addEventListener('touchstart', handleClickOutside);
@@ -231,14 +223,11 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
       <div
         className="relative bg-white p-4 cursor-pointer select-none"
         style={{
-          transform: `translateX(-${translateX}px)`, // Negative because we want card to move left
+          transform: `translateX(-${translateX}px)`,
           transition: isDragging ? 'none' : 'transform 0.3s ease-out',
           userSelect: 'none',
           WebkitUserSelect: 'none',
           cursor: isDragging ? 'grabbing' : 'grab',
-          // Add a visible border to make sure we're clicking the right element
-          border: '2px solid blue'
-          // Add visual debugging
           border: isDragging ? '2px solid red' : 'none'
         }}
         onMouseDown={handleMouseDown}
