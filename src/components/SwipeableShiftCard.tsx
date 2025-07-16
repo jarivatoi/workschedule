@@ -28,7 +28,6 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
   const currentX = useRef(0);
   const isHorizontalGesture = useRef(false);
   const dragStarted = useRef(false);
-  const isDragging = useRef(false);
 
   const SWIPE_THRESHOLD = 50;
   const MAX_SWIPE = 120;
@@ -144,6 +143,12 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
 
   const handleTouchMove = (e: React.TouchEvent) => {
     const touch = e.touches[0];
+    
+    // Prevent default only for horizontal gestures
+    if (isHorizontalGesture.current && dragStarted.current) {
+      e.preventDefault();
+    }
+    
     handleMove(touch.clientX, touch.clientY);
   };
 
@@ -152,25 +157,29 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
     handleEnd();
   };
 
+  // Handle action clicks
   const handleEdit = (e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
-    onEdit();
+    console.log('✏️ Edit clicked');
     resetSwipe();
+    onEdit();
   };
 
   const handleDelete = (e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
-    onDelete();
+    console.log('🗑️ Delete clicked');
     resetSwipe();
+    onDelete();
   };
 
-  const handleClickOutside = (e: MouseEvent | TouchEvent) => {
-    if (cardRef.current && !cardRef.current.contains(e.target as Node)) {
-      resetSwipe();
-    }
-  };
-
+  // Close swipe when clicking outside
   useEffect(() => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (cardRef.current && !cardRef.current.contains(event.target as Node)) {
+        resetSwipe();
+      }
+    };
+
     if (showActions) {
       document.addEventListener('mousedown', handleClickOutside);
       document.addEventListener('touchstart', handleClickOutside);
@@ -223,11 +232,12 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
       <div
         className="relative bg-white p-4 cursor-pointer select-none"
         style={{
-          transform: `translateX(-${translateX}px)`,
+          transform: `translateX(-${translateX}px)`, // Negative because we want card to move left
           transition: isDragging ? 'none' : 'transform 0.3s ease-out',
           userSelect: 'none',
           WebkitUserSelect: 'none',
-          cursor: isDragging ? 'grabbing' : 'grab',
+          zIndex: 2,
+          // Add visual debugging
           border: isDragging ? '2px solid red' : 'none'
         }}
         onMouseDown={handleMouseDown}
