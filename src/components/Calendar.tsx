@@ -295,13 +295,38 @@ export const Calendar: React.FC<CalendarProps> = ({
   // Long-press handlers for month header
   const longPressHandlers = useLongPress({
     onLongPress: () => {
-      setShowMonthClearModal(true);
+      // Only show clear modal if there's content in the current month
+      if (hasCurrentMonthContent()) {
+        setShowMonthClearModal(true);
+      }
     },
     onPress: () => {
       setShowDatePicker(true);
     },
     delay: 500
   });
+
+  // Check if current month has any content (shifts or special dates)
+  const hasCurrentMonthContent = () => {
+    // Check for shifts in current month
+    const hasShifts = Object.keys(schedule).some(dateKey => {
+      const workDate = new Date(dateKey);
+      const shifts = schedule[dateKey];
+      return workDate.getMonth() === currentMonth && 
+             workDate.getFullYear() === currentYear && 
+             shifts && shifts.length > 0;
+    });
+    
+    // Check for special dates in current month
+    const hasSpecialDates = Object.keys(specialDates).some(dateKey => {
+      const workDate = new Date(dateKey);
+      return workDate.getMonth() === currentMonth && 
+             workDate.getFullYear() === currentYear && 
+             specialDates[dateKey] === true;
+    });
+    
+    return hasShifts || hasSpecialDates;
+  };
 
   const handleMonthYearClick = () => {
     setShowDatePicker(true);
