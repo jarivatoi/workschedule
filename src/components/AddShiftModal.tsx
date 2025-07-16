@@ -401,9 +401,9 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
               `}</style>
             </div>
             
-            <div className="flex items-center justify-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <label className="text-sm font-medium text-gray-700 whitespace-nowrap">From:</label>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col items-center">
+                <label className="text-sm font-medium text-gray-700 mb-2">From:</label>
                 <input
                   type="time"
                   value={formData.fromTime}
@@ -415,11 +415,11 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
                       setError(null);
                     }
                   }}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center"
                 />
               </div>
-              <div className="flex items-center space-x-2">
-                <label className="text-sm font-medium text-gray-700 whitespace-nowrap">To:</label>
+              <div className="flex flex-col items-center">
+                <label className="text-sm font-medium text-gray-700 mb-2">To:</label>
                 <input
                   type="time"
                   value={formData.toTime}
@@ -431,7 +431,7 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
                       setError(null);
                     }
                   }}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center"
                 />
               </div>
             </div>
