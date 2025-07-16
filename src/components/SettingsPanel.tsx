@@ -102,10 +102,27 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   };
 
   const handleHourlyRateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseFloat(e.target.value) || 0;
+    const value = e.target.value;
+    // Allow empty string or valid decimal numbers with up to 2 decimal places
+    if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
+      const numericValue = value === '' ? 0 : parseFloat(value) || 0;
+      setHourlyRateValue(numericValue);
+      onUpdateHourlyRate?.(numericValue);
+      setHourlyRateFormula('');
+    }
+  };
+
+  const handleHourlyRateFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    // Show the actual numeric value when focused (remove formatting)
+    e.target.value = hourlyRateValue.toString();
+  };
+
+  const handleHourlyRateBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    // Format to 2 decimal places when focus is lost
+    const numericValue = parseFloat(e.target.value) || 0;
     setHourlyRateValue(value);
     onUpdateHourlyRate?.(value);
-    setHourlyRateFormula('');
+    e.target.value = numericValue.toFixed(2);
   };
 
   const handleOvertimeMultiplierChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -213,10 +230,13 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               </div>
               <input
                 type="number"
-                value={hourlyRateValue.toFixed(2)}
+                value={hourlyRateValue}
                 onChange={handleHourlyRateChange}
+                onFocus={handleHourlyRateFocus}
+                onBlur={handleHourlyRateBlur}
                 step="0.01"
                 min="0"
+                placeholder="0.00"
                 className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center"
               />
             </div>
