@@ -18,123 +18,90 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
   formatTime,
   formatCurrency
 }) => {
-  const [swipeOffset, setSwipeOffset] = useState(0);
+  const [translateX, setTranslateX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [showActions, setShowActions] = useState(false);
+  
   const cardRef = useRef<HTMLDivElement>(null);
   const startX = useRef(0);
   const startY = useRef(0);
   const currentX = useRef(0);
-  const isSwipeGesture = useRef(false);
+  const isHorizontalSwipe = useRef(false);
 
-  const SWIPE_THRESHOLD = 60; // Minimum swipe distance to show actions
-  const MAX_SWIPE = 120; // Maximum swipe distance
+  const SWIPE_THRESHOLD = 50;
+  const MAX_SWIPE = 120;
 
+  // Handle touch start
   const handleTouchStart = (e: React.TouchEvent) => {
     const touch = e.touches[0];
     startX.current = touch.clientX;
     startY.current = touch.clientY;
     currentX.current = touch.clientX;
     setIsDragging(true);
-    isSwipeGesture.current = false;
-    
-    // Prevent default to avoid scrolling issues
-    e.preventDefault();
+    isHorizontalSwipe.current = false;
   };
 
+  // Handle touch move
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDragging) return;
-    
+
     const touch = e.touches[0];
     currentX.current = touch.clientX;
+    
     const deltaX = startX.current - currentX.current;
     const deltaY = Math.abs(startY.current - touch.clientY);
     
-    // Determine if this is a horizontal swipe gesture
-    if (Math.abs(deltaX) > 10 && Math.abs(deltaX) > deltaY) {
-      isSwipeGesture.current = true;
+    // Determine if this is a horizontal swipe
+    if (Math.abs(deltaX) > 10 && Math.abs(deltaX) > deltaY * 2) {
+      isHorizontalSwipe.current = true;
       e.preventDefault(); // Prevent scrolling when swiping horizontally
       
       // Only allow left swipe (positive deltaX)
       if (deltaX > 0) {
         const clampedOffset = Math.min(deltaX, MAX_SWIPE);
-        setSwipeOffset(clampedOffset);
+        setTranslateX(clampedOffset);
       } else {
-        setSwipeOffset(0);
+        setTranslateX(0);
       }
     }
   };
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
+  // Handle touch end
+  const handleTouchEnd = () => {
     setIsDragging(false);
     
-    if (isSwipeGesture.current) {
-      e.preventDefault();
-      
-      if (swipeOffset > SWIPE_THRESHOLD) {
+    if (isHorizontalSwipe.current) {
+      if (translateX > SWIPE_THRESHOLD) {
         // Show actions
-        setSwipeOffset(MAX_SWIPE);
+        setTranslateX(MAX_SWIPE);
         setShowActions(true);
       } else {
         // Snap back
-        setSwipeOffset(0);
+        setTranslateX(0);
         setShowActions(false);
       }
     }
     
-    isSwipeGesture.current = false;
+    isHorizontalSwipe.current = false;
   };
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    startX.current = e.clientX;
-    startY.current = e.clientY;
-    currentX.current = e.clientX;
-    setIsDragging(true);
-    isSwipeGesture.current = false;
-    
-    // Prevent text selection
-    e.preventDefault();
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) return;
-    
-    currentX.current = e.clientX;
-    const deltaX = startX.current - currentX.current;
-    const deltaY = Math.abs(startY.current - e.clientY);
-    
-    // Determine if this is a horizontal swipe gesture
-    if (Math.abs(deltaX) > 10 && Math.abs(deltaX) > deltaY) {
-      isSwipeGesture.current = true;
-      
-      if (deltaX > 0) {
-        const clampedOffset = Math.min(deltaX, MAX_SWIPE);
-        setSwipeOffset(clampedOffset);
-      } else {
-        setSwipeOffset(0);
-      }
-    }
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-    
-    if (isSwipeGesture.current) {
-      if (swipeOffset > SWIPE_THRESHOLD) {
-        setSwipeOffset(MAX_SWIPE);
-        setShowActions(true);
-      } else {
-        setSwipeOffset(0);
-        setShowActions(false);
-      }
-    }
-    
-    isSwipeGesture.current = false;
-  };
-
+  // Reset swipe
   const resetSwipe = () => {
-    setSwipeOffset(0);
+    setTranslateX(0);
     setShowActions(false);
+  };
+
+  // Handle action clicks
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    resetSwipe();
+    onEdit();
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    resetSwipe();
+    onDelete();
   };
 
   // Close swipe when clicking outside
@@ -155,49 +122,36 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
     }
   }, [showActions]);
 
-  // Handle action button clicks
-  const handleEditClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    resetSwipe();
-    onEdit();
-  };
-
-  const handleDeleteClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    resetSwipe();
-    onDelete();
-  };
-
   return (
     <div 
       ref={cardRef}
       className="relative bg-white border border-gray-200 rounded-lg overflow-hidden select-none"
       style={{
-        touchAction: 'pan-y', // Allow vertical scrolling but handle horizontal ourselves
+        touchAction: 'pan-y', // Allow vertical scrolling
         userSelect: 'none',
         WebkitUserSelect: 'none'
       }}
     >
       {/* Action buttons background */}
       <div 
-        className="absolute right-0 top-0 bottom-0 flex items-center"
+        className="absolute right-0 top-0 bottom-0 flex"
         style={{
           width: `${MAX_SWIPE}px`,
-          transform: `translateX(${MAX_SWIPE - swipeOffset}px)`,
+          transform: `translateX(${MAX_SWIPE - translateX}px)`,
           transition: isDragging ? 'none' : 'transform 0.3s ease-out',
           zIndex: 1
         }}
       >
         <button
-          onClick={handleEditClick}
-          className="flex-1 h-full bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center transition-colors duration-200"
+          onClick={handleEdit}
+          className="flex-1 bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center transition-colors duration-200"
           style={{ minWidth: '60px' }}
         >
           <Edit className="w-5 h-5" />
         </button>
         <button
-          onClick={handleDeleteClick}
-          className="flex-1 h-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-colors duration-200"
+          onClick={handleDelete}
+          className="flex-1 bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-colors duration-200"
           style={{ minWidth: '60px' }}
         >
           <Trash2 className="w-5 h-5" />
@@ -208,7 +162,7 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
       <div
         className="relative bg-white p-4 cursor-pointer select-none"
         style={{
-          transform: `translateX(-${swipeOffset}px)`,
+          transform: `translateX(-${translateX}px)`,
           transition: isDragging ? 'none' : 'transform 0.3s ease-out',
           userSelect: 'none',
           WebkitUserSelect: 'none',
@@ -217,10 +171,6 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
         onClick={resetSwipe}
       >
         {/* Shift Header */}
