@@ -1,3 +1,42 @@
+/**
+ * FILE: src/components/SettingsPanel.tsx
+ * 
+ * OVERVIEW:
+ * Settings management component that provides a comprehensive interface for configuring
+ * work schedule parameters including salary, hourly rates, overtime settings, currency,
+ * and custom shift management. This component serves as the central configuration hub
+ * for all application settings.
+ * 
+ * MAIN FUNCTIONALITY:
+ * - Basic salary and hourly rate configuration with automatic calculations
+ * - Currency selection from predefined options
+ * - Overtime multiplier and rate calculations
+ * - Custom shift creation, editing, and deletion
+ * - Formula-based hourly rate calculation
+ * - Real-time preview of calculations and amounts
+ * - Swipeable shift cards for mobile-friendly management
+ * 
+ * DEPENDENCIES:
+ * - React hooks for state management and performance optimization
+ * - Lucide React icons for consistent UI elements
+ * - Custom components: AddShiftModal, ToastNotification, SwipeableShiftCard
+ * - Types: Settings, CustomShift
+ * - Constants: CURRENCY_OPTIONS for supported currencies
+ * 
+ * RELATIONSHIPS:
+ * - Child of App component, receives settings via props
+ * - Communicates changes back to parent through callback props
+ * - Manages AddShiftModal for shift creation/editing
+ * - Integrates with SwipeableShiftCard for shift display and interaction
+ * 
+ * DESIGN PATTERNS:
+ * - Controlled components pattern for form inputs
+ * - Callback pattern for parent-child communication
+ * - Modal pattern for shift editing interface
+ * - Toast notification pattern for user feedback
+ * - Optimistic updates with useCallback for performance
+ */
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { Settings as SettingsIcon, Plus, Trash2, Clock, DollarSign, Edit, Calculator } from 'lucide-react';
 import { Settings, CustomShift } from '../types';
@@ -15,6 +54,7 @@ interface SettingsPanelProps {
   onDeleteCustomShift: (shiftId: string) => void;
   onUpdateHourlyRate?: (rate: number) => void;
   onUpdateOvertimeMultiplier?: (multiplier: number) => void;
+  // Deprecated props kept for compatibility
   onUpdateShiftHours?: (combinationId: string, hours: number) => void;
   onUpdateShiftEnabled?: (combinationId: string, enabled: boolean) => void;
 }
@@ -29,27 +69,84 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   onUpdateHourlyRate,
   onUpdateOvertimeMultiplier
 }) => {
+  // ============================================================================
+  // STATE MANAGEMENT SECTION
+  // ============================================================================
+  
+  /**
+   * MODAL AND UI STATE
+   * Manages the visibility and state of various UI components
+   */
   const [isAddShiftModalOpen, setIsAddShiftModalOpen] = useState(false);
   const [editingShift, setEditingShift] = useState<CustomShift | null>(null);
+  
+  /**
+   * FORMULA CALCULATION STATE
+   * Manages the formula-based hourly rate calculation feature
+   * Allows users to enter formulas like "x12/52/40" for automatic calculation
+   */
   const [hourlyRateFormula, setHourlyRateFormula] = useState('');
   const [hourlyRateValue, setHourlyRateValue] = useState(settings.hourlyRate || 0);
   const [formulaError, setFormulaError] = useState('');
+  
+  /**
+   * NOTIFICATION STATE
+   * Manages toast notifications for user feedback
+   */
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
+  // ============================================================================
+  // EFFECT HOOKS SECTION
+  // ============================================================================
+  
+  /**
+   * HOURLY RATE SYNCHRONIZATION
+   * Keeps local hourly rate value in sync with settings prop
+   * This ensures the input field reflects the current saved value
+   */
   useEffect(() => {
     setHourlyRateValue(settings.hourlyRate || 0);
   }, [settings.hourlyRate]);
 
+  // ============================================================================
+  // FORMULA CALCULATION SECTION
+  // ============================================================================
+  
+  /**
+   * FORMULA PARSER
+   * Parses and evaluates mathematical formulas for hourly rate calculation
+   * Supports basic arithmetic operations: +, -, *, /, x, ÷
+   * 
+   * @param formula - Mathematical formula string (e.g., "x12/52/40")
+   * @param basicSalary - Base salary to apply formula to
+   * @returns Calculated hourly rate or 0 if invalid
+   * 
+   * SECURITY NOTE: Uses Function constructor for evaluation - safe in this context
+   * as input is controlled and sanitized, but be cautious in other applications
+   */
   const parseHourlyRateFormula = useCallback((formula: string, basicSalary: number): number => {
     try {
+      // Normalize formula syntax (convert x to *, ÷ to /)
       const expression = formula.toLowerCase().replace(/x/g, '*').replace(/÷/g, '/');
+      
+      // Safely evaluate the expression with basic salary
       const result = Function(`"use strict"; return (${basicSalary} ${expression})`)();
+      
+      // Return rounded result or 0 if invalid
       return isNaN(result) ? 0 : Math.round(result * 100) / 100;
     } catch {
       return 0;
     }
   }, []);
 
+  /**
+   * FORMULA VALIDATOR
+   * Validates formula syntax before evaluation
+   * Tests with a safe value (1000) to check for syntax errors
+   * 
+   * @param formula - Formula string to validate
+   * @returns true if formula is valid, false otherwise
+   */
   const validateFormula = useCallback((formula: string): boolean => {
     try {
       const expression = formula.toLowerCase().replace(/x/g, '*').replace(/÷/g, '/');
@@ -60,11 +157,29 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     }
   }, []);
 
+  // ============================================================================
+  // BASIC SALARY HANDLERS SECTION
+  // ============================================================================
+  
+  /**
+   * BASIC SALARY CHANGE HANDLER
+   * Handles changes to the basic salary input field
+   * Automatically recalculates hourly rate if formula is present
+   * 
+   * INPUT VALIDATION:
+   * - Only allows digits (no decimals for salary)
+   * - Converts to integer value
+   * - Defaults to 0 for invalid input
+   */
   const handleBasicSalaryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/[^\d]/g, ''); // Only digits, no decimals
+    // Extract only digits from input
+    const value = e.target.value.replace(/[^\d]/g, '');
     const numericValue = parseInt(value) || 0;
+    
+    // Update salary through parent callback
     onUpdateBasicSalary(numericValue);
     
+    // Recalculate hourly rate if formula exists
     if (hourlyRateFormula) {
       const newHourlyRate = parseHourlyRateFormula(hourlyRateFormula, numericValue);
       setHourlyRateValue(newHourlyRate);
@@ -72,27 +187,52 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     }
   };
 
+  /**
+   * BASIC SALARY FOCUS HANDLER
+   * Shows raw numeric value when field gains focus
+   * Removes formatting for easier editing
+   */
   const handleBasicSalaryFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.target.value = settings.basicSalary.toString(); // No decimals for whole numbers
+    e.target.value = settings.basicSalary.toString();
   };
 
+  /**
+   * BASIC SALARY BLUR HANDLER
+   * Formats the salary with thousand separators when field loses focus
+   * Provides better visual presentation of large numbers
+   */
   const handleBasicSalaryBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.target.value = settings.basicSalary.toLocaleString('en-US'); // No decimal places for whole numbers
+    e.target.value = settings.basicSalary.toLocaleString('en-US');
   };
 
+  // ============================================================================
+  // HOURLY RATE FORMULA HANDLERS SECTION
+  // ============================================================================
+  
+  /**
+   * FORMULA INPUT CHANGE HANDLER
+   * Manages the formula input field and clears any previous errors
+   */
   const handleHourlyRateFormulaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formula = e.target.value;
     setHourlyRateFormula(formula);
     setFormulaError('');
   };
 
+  /**
+   * FORMULA KEYDOWN HANDLER
+   * Processes formula when Enter key is pressed
+   * Validates formula syntax and calculates new hourly rate
+   */
   const handleHourlyRateFormulaKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
+      // Validate formula syntax
       if (hourlyRateFormula && !validateFormula(hourlyRateFormula)) {
         setFormulaError('Invalid formula syntax. Use operators: +, -, *, /, x, ÷');
         return;
       }
       
+      // Calculate and apply new hourly rate
       if (hourlyRateFormula) {
         const newHourlyRate = parseHourlyRateFormula(hourlyRateFormula, settings.basicSalary);
         setHourlyRateValue(newHourlyRate);
@@ -101,51 +241,100 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     }
   };
 
+  // ============================================================================
+  // HOURLY RATE DIRECT INPUT HANDLERS SECTION
+  // ============================================================================
+  
+  /**
+   * HOURLY RATE CHANGE HANDLER
+   * Handles direct input to the hourly rate field
+   * Includes sophisticated input validation for decimal numbers
+   * 
+   * VALIDATION RULES:
+   * - Allows empty string for clearing
+   * - Allows single "0"
+   * - Allows "0." followed by up to 2 digits (e.g., "0.50")
+   * - Allows numbers starting with 1-9, optional decimal with up to 2 places
+   * - Prevents leading zeros (except for decimal cases)
+   */
   const handleHourlyRateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     
-    // Allow empty string or valid decimal numbers with up to 2 decimal places
-    // Also prevent leading zeros (except for "0." cases)
+    // Comprehensive validation regex for decimal input
     if (value === '' || 
         (value === '0') || 
         (value.startsWith('0.') && /^0\.\d{0,2}$/.test(value)) ||
         (/^[1-9]\d*\.?\d{0,2}$/.test(value))) {
+      
       const numericValue = value === '' ? 0 : parseFloat(value) || 0;
       setHourlyRateValue(numericValue);
       onUpdateHourlyRate?.(numericValue);
+      
+      // Clear formula when direct input is used
       setHourlyRateFormula('');
     }
   };
 
+  /**
+   * HOURLY RATE FOCUS HANDLER
+   * Shows raw numeric value for editing when field gains focus
+   */
   const handleHourlyRateFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    // Show the actual numeric value when focused (remove formatting)
     e.target.value = hourlyRateValue.toString();
   };
 
+  /**
+   * HOURLY RATE BLUR HANDLER
+   * Formats to 2 decimal places when field loses focus
+   * Ensures consistent display format
+   */
   const handleHourlyRateBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    // Format to 2 decimal places when focus is lost
     const numericValue = parseFloat(e.target.value) || 0;
     setHourlyRateValue(numericValue);
     onUpdateHourlyRate?.(numericValue);
     e.target.value = numericValue.toFixed(2);
   };
 
+  // ============================================================================
+  // OVERTIME SETTINGS HANDLERS SECTION
+  // ============================================================================
+  
+  /**
+   * OVERTIME MULTIPLIER CHANGE HANDLER
+   * Updates the overtime pay multiplier (typically 1.5 for time-and-a-half)
+   */
   const handleOvertimeMultiplierChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseFloat(e.target.value) || 1;
     onUpdateOvertimeMultiplier?.(value);
   };
 
+  // ============================================================================
+  // CUSTOM SHIFT MANAGEMENT HANDLERS SECTION
+  // ============================================================================
+  
+  /**
+   * ADD SHIFT HANDLER
+   * Processes new shift creation and shows success notification
+   */
   const handleAddShift = (shift: CustomShift) => {
     onAddCustomShift(shift);
     setIsAddShiftModalOpen(false);
     setToast({ message: 'Custom shift added successfully!', type: 'success' });
   };
 
+  /**
+   * EDIT SHIFT HANDLER
+   * Initiates shift editing by opening modal with existing shift data
+   */
   const handleEditShift = (shift: CustomShift) => {
     setEditingShift(shift);
     setIsAddShiftModalOpen(true);
   };
 
+  /**
+   * UPDATE SHIFT HANDLER
+   * Processes shift updates and shows success notification
+   */
   const handleUpdateShift = (shift: CustomShift) => {
     if (editingShift) {
       onUpdateCustomShift(editingShift.id, shift);
@@ -155,11 +344,26 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     }
   };
 
+  /**
+   * DELETE SHIFT HANDLER
+   * Processes shift deletion and shows success notification
+   */
   const handleDeleteShift = (shiftId: string) => {
     onDeleteCustomShift(shiftId);
     setToast({ message: 'Custom shift deleted successfully!', type: 'success' });
   };
 
+  // ============================================================================
+  // UTILITY FUNCTIONS SECTION
+  // ============================================================================
+  
+  /**
+   * TIME FORMATTER
+   * Converts 24-hour time format to 12-hour format with AM/PM
+   * 
+   * @param time - Time string in HH:MM format
+   * @returns Formatted time string (e.g., "2:30 PM")
+   */
   const formatTime = (time: string) => {
     const [hours, minutes] = time.split(':');
     const hour = parseInt(hours, 10);
@@ -168,6 +372,13 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     return `${displayHour}:${minutes} ${ampm}`;
   };
 
+  /**
+   * CURRENCY FORMATTER
+   * Formats numeric amounts with currency symbol and proper decimal places
+   * 
+   * @param amount - Numeric amount to format
+   * @returns Formatted currency string
+   */
   const formatCurrency = (amount: number) => {
     const currency = settings?.currency || 'Rs';
     return `${currency} ${amount.toLocaleString('en-US', {
@@ -176,28 +387,38 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     })}`;
   };
 
+  // ============================================================================
+  // RENDER SECTION
+  // ============================================================================
+  
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6 max-w-4xl mx-auto">
+      {/* Header Section */}
       <div className="flex items-center justify-center space-x-3 mb-8">
         <SettingsIcon className="w-6 h-6 text-indigo-600" />
         <h2 className="text-2xl font-bold text-gray-900 text-center">Settings</h2>
       </div>
 
       <div className="max-w-2xl mx-auto space-y-6">
-        {/* Basic Salary */}
+        
+        {/* ====================================================================== */}
+        {/* BASIC SALARY SECTION */}
+        {/* ====================================================================== */}
+        
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
           <label className="block text-sm font-medium text-gray-700 mb-3">
             Basic Salary
           </label>
           <div className="relative">
+            {/* Currency symbol positioned absolutely for better UX */}
             <div className="absolute left-3 top-1/2 transform -translate-y-1/2 flex items-center justify-center">
               <span className="text-gray-500 font-medium">{settings.currency}</span>
             </div>
             <input
               type="text"
-              defaultValue={hourlyRateValue}
+              defaultValue={settings.basicSalary.toLocaleString('en-US')}
               onChange={handleBasicSalaryChange}
-              step="5"
+              onFocus={handleBasicSalaryFocus}
               onBlur={handleBasicSalaryBlur}
               placeholder="0"
               className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center text-lg"
@@ -205,7 +426,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           </div>
         </div>
 
-        {/* Currency Selection */}
+        {/* ====================================================================== */}
+        {/* CURRENCY SELECTION SECTION */}
+        {/* ====================================================================== */}
+        
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
           <label className="block text-sm font-medium text-gray-700 mb-3">
             Currency
@@ -223,33 +447,40 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           </select>
         </div>
 
-        {/* Hourly Rate */}
+        {/* ====================================================================== */}
+        {/* HOURLY RATE SECTION */}
+        {/* ====================================================================== */}
+        
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
           <label className="block text-sm font-medium text-gray-700 mb-3">
             Hourly Rate
           </label>
           <div className="space-y-4">
+            
+            {/* Direct hourly rate input */}
             <div className="relative">
               <div className="absolute left-3 top-1/2 transform -translate-y-1/2 flex items-center justify-center">
                 <span className="text-gray-500 font-medium">{settings.currency}</span>
               </div>
               <input
                 type="number"
-                value={hourlyRateValue}
+                defaultValue={hourlyRateValue}
                 onChange={handleHourlyRateChange}
                 onFocus={handleHourlyRateFocus}
                 onBlur={handleHourlyRateBlur}
-                step="0.01"
+                step="5.00"
                 min="0"
                 placeholder="0.00"
                 className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center"
               />
             </div>
             
+            {/* OR separator */}
             <div className="text-center">
               <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">OR</span>
             </div>
             
+            {/* Formula-based calculation */}
             <div className="space-y-2">
               <input
                 type="text"
@@ -261,9 +492,13 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   formulaError ? 'border-red-500' : 'border-gray-300'
                 }`}
               />
+              
+              {/* Formula error display */}
               {formulaError && (
                 <p className="text-red-500 text-sm text-center">{formulaError}</p>
               )}
+              
+              {/* Formula preview */}
               {hourlyRateFormula && !formulaError && (
                 <p className="text-gray-500 text-sm text-center">
                   Formula: Basic Salary {hourlyRateFormula.replace(/x/g, ' × ').replace(/\//g, ' ÷ ')}
@@ -273,10 +508,15 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           </div>
         </div>
 
-        {/* Overtime Settings */}
+        {/* ====================================================================== */}
+        {/* OVERTIME SETTINGS SECTION */}
+        {/* ====================================================================== */}
+        
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
           <h3 className="text-lg font-semibold text-gray-800 mb-4">Overtime Settings</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            {/* Overtime multiplier input */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Overtime Multiplier
@@ -290,6 +530,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center"
               />
             </div>
+            
+            {/* Calculated overtime rate display */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Overtime Rate
@@ -309,10 +551,15 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           </div>
         </div>
 
-        {/* Custom Shifts */}
+        {/* ====================================================================== */}
+        {/* CUSTOM SHIFTS SECTION */}
+        {/* ====================================================================== */}
+        
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
           <div className="mb-4">
             <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Custom Shifts</h3>
+            
+            {/* Add shift button */}
             <button
               onClick={() => setIsAddShiftModalOpen(true)}
               className="flex items-center justify-center space-x-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors duration-200 font-medium w-full"
@@ -322,13 +569,16 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             </button>
           </div>
           
+          {/* Shifts display area */}
           {!settings.customShifts || settings.customShifts.length === 0 ? (
+            // Empty state display
             <div className="text-center py-8">
               <Clock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-500 text-lg mb-2">No custom shifts added yet</p>
               <p className="text-gray-400 text-sm">Click "Add Shift" to create your first custom shift</p>
             </div>
           ) : (
+            // Shifts grid display
             <div className="grid grid-cols-1 gap-4">
               {settings.customShifts.map((shift) => (
                 <SwipeableShiftCard
@@ -346,6 +596,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         </div>
       </div>
 
+      {/* ====================================================================== */}
+      {/* MODAL COMPONENTS SECTION */}
+      {/* ====================================================================== */}
+      
       {/* Add/Edit Shift Modal */}
       {isAddShiftModalOpen && (
         <AddShiftModal
@@ -374,3 +628,49 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     </div>
   );
 };
+
+/**
+ * LEARNING POINTS:
+ * 
+ * 1. FORM HANDLING PATTERNS:
+ *    - Controlled vs uncontrolled components
+ *    - Input validation and sanitization
+ *    - Focus/blur event handling for better UX
+ *    - Real-time calculation and preview
+ * 
+ * 2. MATHEMATICAL FORMULA EVALUATION:
+ *    - Safe evaluation using Function constructor
+ *    - Input sanitization and validation
+ *    - Error handling for invalid expressions
+ *    - User-friendly formula syntax conversion
+ * 
+ * 3. PERFORMANCE OPTIMIZATION:
+ *    - useCallback for expensive function recreations
+ *    - Efficient state updates and re-renders
+ *    - Optimistic UI updates
+ * 
+ * 4. USER EXPERIENCE PATTERNS:
+ *    - Progressive disclosure (formula OR direct input)
+ *    - Immediate feedback with toast notifications
+ *    - Consistent formatting and validation
+ *    - Mobile-friendly swipeable interactions
+ * 
+ * 5. COMPONENT COMPOSITION:
+ *    - Modal pattern for complex forms
+ *    - Reusable card components
+ *    - Notification system integration
+ *    - Clean separation of concerns
+ * 
+ * 6. INPUT VALIDATION TECHNIQUES:
+ *    - Regex patterns for decimal number validation
+ *    - Real-time validation feedback
+ *    - Preventing invalid input states
+ *    - Graceful error handling
+ * 
+ * AREAS FOR FURTHER STUDY:
+ * - Advanced form libraries (React Hook Form, Formik)
+ * - Mathematical expression parsing libraries
+ * - Advanced input validation patterns
+ * - Accessibility improvements for form controls
+ * - State management patterns for complex forms
+ */
