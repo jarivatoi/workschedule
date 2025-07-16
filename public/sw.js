@@ -99,7 +99,7 @@ self.addEventListener('fetch', (event) => {
                    </head>
                    <body>
                      <div class="container">
-                       <h1>📱 X-ray ANWH</h1>
+                       <h1>📱 Work Schedule</h1>
                        <p>App is loading... If this persists, please check your connection and try again.</p>
                        <button onclick="window.location.reload()">Reload App</button>
                      </div>

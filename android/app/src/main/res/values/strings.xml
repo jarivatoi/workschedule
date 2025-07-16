@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">X-ray ANWH</string>
-    <string name="title_activity_main">X-ray ANWH</string>
+    <string name="app_name">Work Schedule</string>
+    <string name="title_activity_main">Work Schedule</string>
     <string name="package_name">com.narayya.workschedule</string>
     <string name="custom_url_scheme">com.narayya.workschedule</string>
 </resources>

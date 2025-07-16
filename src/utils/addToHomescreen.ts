@@ -42,7 +42,7 @@ export class AddToHomescreen {
 
   constructor(options: AddToHomescreenOptions = {}) {
     this.options = {
-      appName: 'X-ray ANWH',
+      appName: 'Work Schedule',
       appIconUrl: 'https://jarivatoi.github.io/workschedule/Icon.PNG',
       maxModalDisplayCount: 3,
       skipFirstVisit: false,

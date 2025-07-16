@@ -2,7 +2,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.narayya.workschedule',
-  appName: 'X-ray ANWH',
+  appName: 'Work Schedule',
   webDir: 'dist',
   bundledWebRuntime: false,
   server: {
