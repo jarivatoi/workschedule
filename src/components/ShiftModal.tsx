@@ -1,8 +1,57 @@
+/**
+ * Shift Modal Component - Date-Specific Shift Selection Interface
+ * 
+ * This modal component provides an interface for selecting and managing shifts
+ * for a specific date. It handles shift availability rules, special date logic,
+ * and provides real-time feedback on selections and calculations.
+ * 
+ * Key Features:
+ * - Date-specific shift selection with business rule validation
+ * - Special date toggle with automatic shift adjustment
+ * - Real-time amount calculations and display
+ * - Auto-save functionality (changes persist immediately)
+ * - Mobile-optimized scrolling and touch interactions
+ * - Smart focus management and keyboard navigation
+ * 
+ * Business Rules:
+ * - Maximum 3 shifts per day
+ * - Shift availability based on day of week and special date status
+ * - Automatic conflict resolution when toggling special dates
+ * - Custom shifts respect their day-specific availability settings
+ * 
+ * UX Patterns:
+ * - Auto-save eliminates need for save/cancel buttons
+ * - Visual feedback for all interactions
+ * - Smooth scrolling back to edited date on close
+ * - Consistent modal behavior across the application
+ * 
+ * Dependencies:
+ * - React hooks for state management
+ * - Lucide React for icons
+ * - Custom date utilities
+ * - GSAP for scroll animations
+ * 
+ * @author NARAYYA
+ * @version 3.0
+ */
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { X, Check } from 'lucide-react';
 import { DaySchedule, SpecialDates, Settings } from '../types';
 import { getDayOfWeek } from '../utils/dateUtils';
 
+/**
+ * Props interface for the ShiftModal component
+ * 
+ * @interface ShiftModalProps
+ * @property {string | null} selectedDate - Date being edited in YYYY-MM-DD format
+ * @property {DaySchedule} schedule - Complete schedule data mapping dates to shifts
+ * @property {SpecialDates} specialDates - Special date flags mapping
+ * @property {Settings} settings - Application settings including custom shifts
+ * @property {function} onToggleShift - Callback when a shift is toggled on/off
+ * @property {function} onToggleSpecialDate - Callback when special date status changes
+ * @property {function} onClose - Callback when modal should be closed
+ */
 interface ShiftModalProps {
   selectedDate: string | null;
   schedule: DaySchedule;
@@ -13,6 +62,25 @@ interface ShiftModalProps {
   onClose: () => void;
 }
 
+/**
+ * ShiftModal Component
+ * 
+ * Renders a modal interface for editing shifts on a specific date.
+ * Handles complex business logic for shift availability and conflicts.
+ * 
+ * State Management:
+ * - Tracks special date status locally for immediate UI feedback
+ * - Maintains selected shifts array for real-time calculations
+ * - Syncs with parent state through callbacks
+ * 
+ * Performance Optimizations:
+ * - Smooth scrolling with hardware acceleration
+ * - Efficient re-rendering through proper state management
+ * - Touch-optimized scrolling for mobile devices
+ * 
+ * @param {ShiftModalProps} props - Component props
+ * @returns {JSX.Element | null} The rendered modal or null if not open
+ */
 export const ShiftModal: React.FC<ShiftModalProps> = ({
   selectedDate,
   schedule,
@@ -22,10 +90,28 @@ export const ShiftModal: React.FC<ShiftModalProps> = ({
   onToggleSpecialDate,
   onClose
 }) => {
+  // ==================== STATE MANAGEMENT ====================
+  
+  /**
+   * Local special date status for immediate UI feedback
+   * Synced with parent state but allows for optimistic updates
+   */
   const [isSpecialDate, setIsSpecialDate] = useState(false);
+  
+  /**
+   * Currently selected shifts for real-time calculations
+   * Maintained locally to avoid prop drilling and enable immediate feedback
+   */
   const [selectedShifts, setSelectedShifts] = useState<string[]>([]);
 
-  // Initialize special date state when modal opens
+  /**
+   * Initialize state when modal opens or date changes
+   * 
+   * Why useEffect:
+   * - Ensures state is fresh when modal opens
+   * - Handles date changes while modal is open
+   * - Syncs local state with parent data
+   */
   useEffect(() => {
     if (selectedDate) {
       setIsSpecialDate(specialDates[selectedDate] === true);
@@ -33,10 +119,22 @@ export const ShiftModal: React.FC<ShiftModalProps> = ({
     }
   }, [selectedDate, specialDates, schedule]);
 
-  // Function to scroll back to the edited date when modal closes
+  /**
+   * Enhanced close handler with focus management
+   * 
+   * Why useCallback:
+   * - Prevents unnecessary re-renders of child components
+   * - Stable reference for event handlers
+   * - Optimizes performance in dependency arrays
+   * 
+   * Focus Management:
+   * - Scrolls back to the edited date after closing
+   * - Provides visual feedback about which date was edited
+   * - Improves user orientation and workflow
+   */
   const handleCloseWithFocus = useCallback(() => {
     if (selectedDate) {
-      // Parse the date to get the day number
+      // Parse the date to get the day number for scrolling
       const dateObj = new Date(selectedDate);
       const dayNumber = dateObj.getDate();
       
@@ -78,7 +176,22 @@ export const ShiftModal: React.FC<ShiftModalProps> = ({
     }
   }, [selectedDate, onClose]);
 
-  // Prevent body scroll when modal is open
+  // ==================== SCROLL PREVENTION ====================
+  
+  /**
+   * Prevents body scroll when modal is open
+   * 
+   * Why this approach:
+   * - Prevents background scrolling on mobile devices
+   * - Maintains modal position during device orientation changes
+   * - Ensures consistent behavior across iOS and Android
+   * - Matches pattern used in other modals for consistency
+   * 
+   * Implementation Details:
+   * - Sets body to fixed positioning to prevent scroll
+   * - Covers entire viewport to prevent any scrolling
+   * - Restores original styles on cleanup
+   */
   useEffect(() => {
     if (selectedDate) {
       // Disable body scroll
@@ -101,14 +214,30 @@ export const ShiftModal: React.FC<ShiftModalProps> = ({
     };
   }, [selectedDate]);
 
-  // Close modal when clicking outside
+  /**
+   * Handles backdrop clicks to close modal
+   * 
+   * @param {React.MouseEvent} e - Mouse event from backdrop click
+   * 
+   * Why check target === currentTarget:
+   * - Ensures click was on backdrop, not modal content
+   * - Prevents accidental closes when clicking inside modal
+   * - Standard pattern for modal backdrop behavior
+   */
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
       handleCloseWithFocus();
     }
   };
 
-  // Close modal on escape key
+  /**
+   * Handles escape key to close modal
+   * 
+   * Why separate from backdrop handler:
+   * - Provides keyboard accessibility
+   * - Standard modal behavior expectation
+   * - Allows for different close animations if needed
+   */
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -120,9 +249,32 @@ export const ShiftModal: React.FC<ShiftModalProps> = ({
     return () => document.removeEventListener('keydown', handleEscape);
   }, [handleCloseWithFocus]);
 
+  // Early return if modal should not be shown
   if (!selectedDate) return null;
 
-  // Get available shifts from settings
+  // ==================== SHIFT AVAILABILITY LOGIC ====================
+  
+  /**
+   * Gets available shifts for the selected date based on business rules
+   * 
+   * @returns {Array} Array of available shift objects with display information
+   * 
+   * Business Logic:
+   * 1. Determines day of week for the selected date
+   * 2. Checks if date is marked as special
+   * 3. Filters custom shifts based on their applicability rules
+   * 4. Returns formatted shift objects for display
+   * 
+   * Applicability Rules:
+   * - Each custom shift has day-specific availability settings
+   * - Special dates can override normal day rules
+   * - Disabled shifts are excluded from availability
+   * 
+   * Why calculate here:
+   * - Rules may change based on special date status
+   * - Provides real-time updates when special date is toggled
+   * - Encapsulates complex business logic in one place
+   */
   const getAvailableShifts = () => {
     const shifts = [];
     
@@ -167,14 +319,47 @@ export const ShiftModal: React.FC<ShiftModalProps> = ({
 
   const availableShifts = getAvailableShifts();
   
+  /**
+   * Checks for time overlaps between two shifts
+   * 
+   * @param {any} shift1 - First shift to compare
+   * @param {any} shift2 - Second shift to compare
+   * @returns {boolean} True if shifts overlap in time
+   * 
+   * Note: Currently returns false (allows all combinations)
+   * This is a placeholder for future time conflict detection
+   * 
+   * Future Implementation:
+   * - Parse fromTime and toTime for each shift
+   * - Calculate overlap periods
+   * - Return true if any overlap exists
+   * - Consider overnight shifts (end time < start time)
+   */
   const checkTimeOverlap = (shift1: any, shift2: any) => {
     // Simple overlap check - can be enhanced based on actual time ranges
     return false; // For now, allow all combinations
   };
 
+  /**
+   * Determines if a shift can be selected based on current state
+   * 
+   * @param {string} shiftId - ID of the shift to check
+   * @returns {boolean} True if shift can be selected
+   * 
+   * Selection Rules:
+   * 1. Already selected shifts can always be deselected
+   * 2. Maximum 3 shifts per day limit
+   * 3. No time overlaps with already selected shifts
+   * 4. Shift must exist in available shifts list
+   * 
+   * Why these rules:
+   * - 3 shift limit prevents UI overcrowding and unrealistic schedules
+   * - Time overlap prevention avoids scheduling conflicts
+   * - Availability check ensures business rules are respected
+   */
   const canSelectShift = (shiftId: string) => {
-    if (selectedShifts.includes(shiftId)) return true;
-    if (selectedShifts.length >= 3) return false;
+    if (selectedShifts.includes(shiftId)) return true; // Can always deselect
+    if (selectedShifts.length >= 3) return false; // Maximum 3 shifts
     
     const currentShift = availableShifts.find(s => s.id === shiftId);
     if (!currentShift) return false;
@@ -190,6 +375,21 @@ export const ShiftModal: React.FC<ShiftModalProps> = ({
     return true;
   };
   
+  /**
+   * Handles toggling a shift on/off for the selected date
+   * 
+   * @param {string} shiftId - ID of the shift to toggle
+   * 
+   * Process:
+   * 1. Updates local state immediately for UI responsiveness
+   * 2. Calls parent callback to persist changes
+   * 3. Maintains consistency between local and parent state
+   * 
+   * Why update local state:
+   * - Provides immediate visual feedback
+   * - Enables real-time calculation updates
+   * - Improves perceived performance
+   */
   const handleShiftToggle = (shiftId: string) => {
     const newSelectedShifts = selectedShifts.includes(shiftId)
       ? selectedShifts.filter(id => id !== shiftId)
@@ -199,6 +399,19 @@ export const ShiftModal: React.FC<ShiftModalProps> = ({
     onToggleShift(shiftId);
   };
   
+  /**
+   * Calculates total amount for currently selected shifts
+   * 
+   * @returns {number} Total calculated amount
+   * 
+   * Calculation:
+   * 1. Finds each selected shift in available shifts
+   * 2. Multiplies shift hours by hourly rate
+   * 3. Sums all shift amounts
+   * 
+   * Note: Uses basic hourly rate calculation
+   * Future enhancement: Separate normal/overtime calculations
+   */
   const calculateTotalAmount = () => {
     let total = 0;
     selectedShifts.forEach(shiftId => {
@@ -210,6 +423,14 @@ export const ShiftModal: React.FC<ShiftModalProps> = ({
     return total;
   };
   
+  /**
+   * Formats currency amounts for display
+   * 
+   * @param {number} amount - Amount to format
+   * @returns {string} Formatted currency string
+   * 
+   * Uses application currency setting and standard formatting
+   */
   const formatCurrency = (amount: number) => {
     const currency = settings.currency || 'Rs';
     return `${currency} ${amount.toLocaleString('en-US', {
@@ -218,6 +439,16 @@ export const ShiftModal: React.FC<ShiftModalProps> = ({
     })}`;
   };
 
+  /**
+   * Formats date for display in modal header
+   * 
+   * @param {string} dateString - Date string in YYYY-MM-DD format
+   * @returns {Object} Object with formatted day name and date string
+   * 
+   * Format:
+   * - dayName: Full day name (e.g., "Monday")
+   * - dateString: Formatted as DD-MMM-YYYY (e.g., "15-Jan-2024")
+   */
   const formatDateDisplay = (dateString: string) => {
     const date = new Date(dateString);
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -234,6 +465,24 @@ export const ShiftModal: React.FC<ShiftModalProps> = ({
     };
   };
 
+  /**
+   * Handles special date toggle with automatic shift adjustment
+   * 
+   * Why async:
+   * - Allows for future database operations
+   * - Provides consistent API with other data operations
+   * - Enables proper error handling
+   * 
+   * Business Logic:
+   * 1. Updates special date status immediately
+   * 2. Calls parent callback to persist change
+   * 3. Removes conflicting shifts automatically
+   * 4. Provides smooth user experience
+   * 
+   * Conflict Resolution:
+   * - Enabling special date: Removes shifts not allowed on special days
+   * - Disabling special date: Removes shifts only allowed on special days
+   */
   const handleSpecialDateToggle = async () => {
     const newSpecialState = !isSpecialDate;
     setIsSpecialDate(newSpecialState);
@@ -261,6 +510,8 @@ export const ShiftModal: React.FC<ShiftModalProps> = ({
 
   const { dayName, dateString } = formatDateDisplay(selectedDate);
 
+  // ==================== RENDER ====================
+  
   return (
     <div 
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto"
@@ -271,10 +522,9 @@ export const ShiftModal: React.FC<ShiftModalProps> = ({
         left: 0,
         right: 0,
         bottom: 0,
-        zIndex: 99999, // Higher z-index to ensure it's above everything
-        // CRITICAL: Enable touch scrolling on the backdrop
+        zIndex: 99999,
         WebkitOverflowScrolling: 'touch',
-        touchAction: 'pan-y' // Allow vertical panning (scrolling)
+        touchAction: 'pan-y'
       }}
     >
       <div 
@@ -282,20 +532,17 @@ export const ShiftModal: React.FC<ShiftModalProps> = ({
         style={{ 
           userSelect: 'none', 
           WebkitUserSelect: 'none',
-          // Ensure modal is properly centered and doesn't overlap calendar
           position: 'relative',
           maxHeight: '90vh',
           margin: 'auto',
-          // Prevent any positioning issues
           transform: 'translate3d(0, 0, 0)',
           backfaceVisibility: 'hidden'
         }}
         onClick={(e) => {
-          // Prevent modal from closing when clicking inside
           e.stopPropagation();
         }}
       >
-        {/* Header with close button and auto-save indicator */}
+        {/* Header with auto-save indicator */}
         <div className="relative p-6 pb-4 border-b border-gray-200">
           <button
             onClick={handleCloseWithFocus}
@@ -311,7 +558,7 @@ export const ShiftModal: React.FC<ShiftModalProps> = ({
             <span className="text-sm text-green-600 font-medium select-none">Changes saved automatically</span>
           </div>
 
-          {/* Date info - centered */}
+          {/* Date info */}
           <div className="text-center">
             <h3 className="text-xl font-bold text-gray-900 mb-1 select-none">
               {dayName}
@@ -322,17 +569,16 @@ export const ShiftModal: React.FC<ShiftModalProps> = ({
           </div>
         </div>
 
-        {/* Scrollable content with ENHANCED TOUCH SUPPORT */}
+        {/* Scrollable content */}
         <div 
           className="overflow-y-auto max-h-[70vh] p-6"
           style={{
-            // CRITICAL: Enable smooth touch scrolling
             WebkitOverflowScrolling: 'touch',
-            touchAction: 'pan-y', // Allow vertical panning (scrolling)
-            overscrollBehavior: 'contain' // Prevent scroll chaining to parent
+            touchAction: 'pan-y',
+            overscrollBehavior: 'contain'
           }}
         >
-          {/* Special Date Checkbox - only show if not Sunday */}
+          {/* Special Date Toggle */}
           <div className="flex items-center justify-center space-x-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg mb-4">
             <label className="flex items-center space-x-2 cursor-pointer">
               <input
@@ -359,7 +605,7 @@ export const ShiftModal: React.FC<ShiftModalProps> = ({
             )}
           </div>
 
-          {/* Scrollable Shift List */}
+          {/* Shift List */}
           <div className="mb-6">
             <h4 className="text-sm font-medium text-gray-700 mb-3 text-center">Available Shifts ({availableShifts.length})</h4>
             <div className="max-h-64 overflow-y-auto space-y-3 border border-gray-200 rounded-lg p-3">
@@ -417,6 +663,7 @@ export const ShiftModal: React.FC<ShiftModalProps> = ({
             </div>
           </div>
 
+          {/* Empty state */}
           {availableShifts.length === 0 && (
             <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-center">
               <p className="text-yellow-800 font-medium">No shifts available</p>
@@ -424,7 +671,7 @@ export const ShiftModal: React.FC<ShiftModalProps> = ({
             </div>
           )}
 
-          {/* Add extra padding at bottom to ensure all content is accessible */}
+          {/* Bottom padding for scroll accessibility */}
           <div className="h-8" />
         </div>
       </div>

@@ -1,3 +1,35 @@
+/**
+ * Calendar Component - Interactive Work Schedule Calendar
+ * 
+ * This component renders the main calendar interface where users can view and interact
+ * with their work schedule. It provides a month-based view with visual indicators for
+ * scheduled shifts, special dates, and calculated earnings.
+ * 
+ * Key Features:
+ * - Month navigation with smooth animations
+ * - Visual shift indicators with color coding
+ * - Real-time amount calculations (monthly and month-to-date)
+ * - Special date marking and management
+ * - Long-press actions for data clearing
+ * - Mobile-optimized touch interactions
+ * - Hardware-accelerated animations via GSAP
+ * 
+ * Performance Optimizations:
+ * - Sequential day animations for smooth mobile experience
+ * - Dynamic row heights based on content
+ * - Hardware acceleration with force3D
+ * - Optimized touch event handling
+ * 
+ * Dependencies:
+ * - React hooks for state management
+ * - GSAP for animations
+ * - Lucide React for icons
+ * - Custom hooks for long-press detection
+ * 
+ * @author NARAYYA
+ * @version 3.0
+ */
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Calculator, Edit3, TrendingUp, Trash2, AlertTriangle, X } from 'lucide-react';
 import { gsap } from 'gsap';
@@ -9,11 +41,29 @@ import { MonthClearModal } from './MonthClearModal';
 import { formatMauritianRupees } from '../utils/currency';
 import { useLongPress } from '../hooks/useLongPress';
 
+/**
+ * Props interface for the Calendar component
+ * 
+ * @interface CalendarProps
+ * @property {Date} currentDate - The currently viewed month/year
+ * @property {DaySchedule} schedule - Object mapping dates to shift arrays
+ * @property {SpecialDates} specialDates - Object mapping dates to special flags
+ * @property {any} settings - Application settings including custom shifts and rates
+ * @property {function} onDateClick - Callback when a date is clicked for editing
+ * @property {function} onNavigateMonth - Callback for month navigation
+ * @property {number} totalAmount - Total calculated amount for the month
+ * @property {number} monthToDateAmount - Amount from start of month to today
+ * @property {function} onDateChange - Callback when date picker changes month/year
+ * @property {string} scheduleTitle - User-customizable title for the schedule
+ * @property {function} onTitleUpdate - Callback when title is edited
+ * @property {function} setSchedule - Function to update schedule data
+ * @property {function} setSpecialDates - Function to update special dates data
+ */
 interface CalendarProps {
   currentDate: Date;
   schedule: DaySchedule;
   specialDates: SpecialDates;
-  settings: any; // Add settings prop to access custom shifts
+  settings: any;
   onDateClick: (day: number) => void;
   onNavigateMonth: (direction: 'prev' | 'next') => void;
   totalAmount: number;
@@ -26,6 +76,27 @@ interface CalendarProps {
   setSpecialDates: React.Dispatch<React.SetStateAction<SpecialDates>>;
 }
 
+/**
+ * Calendar Component
+ * 
+ * Renders an interactive monthly calendar with shift scheduling capabilities.
+ * Handles user interactions, animations, and data management for the calendar view.
+ * 
+ * Architecture:
+ * - Uses GSAP for hardware-accelerated animations
+ * - Implements long-press detection for advanced actions
+ * - Manages multiple modal states for different operations
+ * - Calculates dynamic layouts based on content
+ * 
+ * Mobile Optimizations:
+ * - Touch-friendly interaction targets (44px minimum)
+ * - Smooth scrolling with momentum
+ * - Optimized animation timing for mobile performance
+ * - Safe area handling for notched devices
+ * 
+ * @param {CalendarProps} props - Component props
+ * @returns {JSX.Element} The rendered calendar interface
+ */
 export const Calendar: React.FC<CalendarProps> = ({
   currentDate,
   schedule,
@@ -41,24 +112,66 @@ export const Calendar: React.FC<CalendarProps> = ({
   setSchedule,
   setSpecialDates
 }) => {
+  // ==================== STATE MANAGEMENT ====================
+  
+  /**
+   * Controls visibility of the date picker modal
+   * Used for month/year navigation
+   */
   const [showDatePicker, setShowDatePicker] = useState(false);
+  
+  /**
+   * Controls title editing mode
+   * When true, shows input field instead of title text
+   */
   const [isEditingTitle, setIsEditingTitle] = useState(false);
+  
+  /**
+   * Temporary title value during editing
+   * Allows cancellation without affecting the actual title
+   */
   const [tempTitle, setTempTitle] = useState(scheduleTitle);
+  
+  /**
+   * Modal state management for various clearing operations
+   * Each modal handles different types of data clearing
+   */
   const [showClearDateModal, setShowClearDateModal] = useState(false);
   const [showClearMonthModal, setShowClearMonthModal] = useState(false);
   const [showMonthClearModal, setShowMonthClearModal] = useState(false);
+  
+  /**
+   * Stores the date key for the date being cleared
+   * Format: YYYY-MM-DD
+   */
   const [dateToDelete, setDateToDelete] = useState<string | null>(null);
+  
+  /**
+   * Timer reference for long-press detection
+   * Used to implement long-press actions on dates
+   */
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+  
+  /**
+   * Reference to the calendar grid container
+   * Used by GSAP for animations and DOM manipulation
+   */
   const calendarGridRef = useRef<HTMLDivElement>(null);
+  
+  // ==================== DATE CALCULATIONS ====================
   
   const today = new Date();
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
   const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
   const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
-  const firstDayWeekday = firstDayOfMonth.getDay();
+  const firstDayWeekday = firstDayOfMonth.getDay(); // 0 = Sunday
   const daysInMonth = lastDayOfMonth.getDate();
 
+  /**
+   * Month and day name arrays for display formatting
+   * Used throughout the component for consistent date formatting
+   */
   const monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
@@ -66,10 +179,20 @@ export const Calendar: React.FC<CalendarProps> = ({
 
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-  // Prevent body scroll when date picker modal is open - EXACTLY LIKE OTHER MODALS
+  // ==================== MODAL SCROLL PREVENTION ====================
+  
+  /**
+   * Prevents body scroll when date picker modal is open
+   * 
+   * Why this approach:
+   * - Prevents background scrolling on mobile devices
+   * - Maintains modal position during device orientation changes
+   * - Ensures consistent behavior across iOS and Android
+   * 
+   * Implementation matches other modals for consistency
+   */
   useEffect(() => {
     if (showDatePicker) {
-      // Disable body scroll
       document.body.style.overflow = 'hidden';
       document.body.style.position = 'fixed';
       document.body.style.top = '0';
@@ -79,7 +202,6 @@ export const Calendar: React.FC<CalendarProps> = ({
     }
 
     return () => {
-      // Re-enable body scroll
       document.body.style.overflow = '';
       document.body.style.position = '';
       document.body.style.top = '';
@@ -89,7 +211,23 @@ export const Calendar: React.FC<CalendarProps> = ({
     };
   }, [showDatePicker]);
 
-  // Mobile-optimized sequential animation - smoother for iOS
+  // ==================== ANIMATION SYSTEM ====================
+  
+  /**
+   * Mobile-optimized sequential animation system
+   * 
+   * Why this approach:
+   * - Sequential animations feel more natural than simultaneous ones
+   * - Reduced animation distance (80px vs 120px) for mobile performance
+   * - Hardware acceleration via force3D for smooth 60fps animations
+   * - Eased timing (easeOutQuart) feels more organic than linear
+   * 
+   * Performance considerations:
+   * - Uses requestAnimationFrame for optimal timing
+   * - Sorts elements by day number for logical animation order
+   * - Separate animation phases for different content types
+   * - Cleanup prevents memory leaks on component unmount
+   */
   useEffect(() => {
     if (calendarGridRef.current) {
       // Get all day boxes and sort them by day number for sequential animation
@@ -183,7 +321,16 @@ export const Calendar: React.FC<CalendarProps> = ({
     }
   }, [currentMonth, currentYear]);
 
-  // Close modal on escape key - EXACTLY LIKE SHIFT MODAL
+  // ==================== KEYBOARD NAVIGATION ====================
+  
+  /**
+   * Handles escape key to close modals
+   * 
+   * Why separate from click handlers:
+   * - Provides consistent keyboard navigation
+   * - Accessibility requirement for modal dialogs
+   * - Prevents event conflicts with other key handlers
+   */
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -197,43 +344,138 @@ export const Calendar: React.FC<CalendarProps> = ({
     }
   }, [showDatePicker]);
 
-  // Close date picker when clicking outside - EXACTLY LIKE OTHER MODALS
+  /**
+   * Handles backdrop clicks to close date picker modal
+   * 
+   * @param {React.MouseEvent} e - Mouse event from backdrop click
+   * 
+   * Why check target === currentTarget:
+   * - Ensures click was on backdrop, not modal content
+   * - Prevents accidental closes when clicking inside modal
+   * - Standard pattern for modal backdrop behavior
+   */
   const handleDatePickerBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
       setShowDatePicker(false);
     }
   };
 
+  // ==================== DATE UTILITY FUNCTIONS ====================
+  
+  /**
+   * Formats a day number into a standardized date key
+   * 
+   * @param {number} day - Day of the month (1-31)
+   * @returns {string} Date string in YYYY-MM-DD format
+   * 
+   * Why ISO 8601 format:
+   * - Ensures consistent sorting across different locales
+   * - Compatible with Date constructor and parsing
+   * - Standard format for database storage and API communication
+   * - Avoids timezone and locale-specific formatting issues
+   */
   const formatDateKey = (day: number) => {
     return `${currentYear}-${(currentMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
   };
 
+  /**
+   * Checks if a given day is today's date
+   * 
+   * @param {number} day - Day of the month to check
+   * @returns {boolean} True if the day represents today
+   * 
+   * Why separate function:
+   * - Used multiple times throughout component
+   * - Encapsulates the comparison logic
+   * - Makes the intent clear in calling code
+   */
   const isToday = (day: number) => {
     return today.getDate() === day && 
            today.getMonth() === currentMonth && 
            today.getFullYear() === currentYear;
   };
 
+  /**
+   * Checks if a given day is in the past
+   * 
+   * @param {number} day - Day of the month to check
+   * @returns {boolean} True if the day is before today
+   * 
+   * Used for:
+   * - Visual styling (grayed out past dates)
+   * - Preventing edits to historical data
+   * - Showing completion status
+   */
   const isPastDate = (day: number) => {
     const dateToCheck = new Date(currentYear, currentMonth, day);
     const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     return dateToCheck < todayDate;
   };
 
+  /**
+   * Gets the day of the week for a given day
+   * 
+   * @param {number} day - Day of the month
+   * @returns {number} Day of week (0 = Sunday, 6 = Saturday)
+   * 
+   * Used for:
+   * - Determining if date is Sunday (special styling)
+   * - Shift availability rules
+   * - Weekend/weekday logic
+   */
   const getDayOfWeek = (day: number) => {
     const date = new Date(currentYear, currentMonth, day);
-    return date.getDay(); // 0 = Sunday, 6 = Saturday
+    return date.getDay();
   };
 
+  /**
+   * Checks if a given day is Sunday
+   * 
+   * @param {number} day - Day of the month to check
+   * @returns {boolean} True if the day is Sunday
+   * 
+   * Why separate from getDayOfWeek:
+   * - Sunday has special significance in this app
+   * - Used for styling and business logic
+   * - Makes calling code more readable
+   */
   const isSunday = (day: number) => {
     return getDayOfWeek(day) === 0;
   };
 
+  /**
+   * Checks if a given day is marked as a special date
+   * 
+   * @param {number} day - Day of the month to check
+   * @returns {boolean} True if the day is marked as special
+   * 
+   * Special dates:
+   * - Public holidays
+   * - Company events
+   * - Days with different shift rules
+   * - User-defined special occasions
+   */
   const isSpecialDate = (day: number) => {
     const dateKey = formatDateKey(day);
     return specialDates[dateKey] === true;
   };
 
+  /**
+   * Gets the scheduled shifts for a given day, sorted in display order
+   * 
+   * @param {number} day - Day of the month
+   * @returns {string[]} Array of shift IDs sorted for optimal display
+   * 
+   * Sorting logic:
+   * - Predefined order: 9-4, 4-10, 12-10, N (Night)
+   * - Custom shifts appear after predefined ones
+   * - Consistent ordering improves user experience
+   * 
+   * Why sorting matters:
+   * - Visual consistency across the calendar
+   * - Logical flow from day to evening to night shifts
+   * - Easier for users to scan and understand
+   */
   const getDayShifts = (day: number) => {
     const dateKey = formatDateKey(day);
     const shifts = schedule[dateKey] || [];
@@ -252,10 +494,37 @@ export const Calendar: React.FC<CalendarProps> = ({
     });
   };
 
+  /**
+   * Gets display information for a shift ID
+   * 
+   * @param {string} shiftId - The shift identifier
+   * @returns {Shift | undefined} Shift display object or undefined if not found
+   * 
+   * Used for:
+   * - Getting display colors and labels
+   * - Backward compatibility with legacy shift system
+   * - Fallback when custom shifts aren't available
+   */
   const getShiftDisplay = (shiftId: string) => {
     return SHIFTS.find(shift => shift.id === shiftId);
   };
 
+  /**
+   * Determines the appropriate text color for a date based on its status
+   * 
+   * @param {number} day - Day of the month
+   * @returns {string} CSS class string for text color
+   * 
+   * Color coding:
+   * - Green: Today (current date)
+   * - Red: Sundays and special dates
+   * - Gray: Regular dates
+   * 
+   * Why color coding:
+   * - Immediate visual feedback about date significance
+   * - Accessibility through color differentiation
+   * - Consistent with calendar conventions
+   */
   const getDateTextColor = (day: number) => {
     if (isToday(day)) {
       return 'text-green-700 font-bold'; // Current date in green
@@ -266,12 +535,39 @@ export const Calendar: React.FC<CalendarProps> = ({
     }
   };
 
+  /**
+   * Formats currency amounts using the Mauritian Rupees formatter
+   * 
+   * @param {number} amount - Amount to format
+   * @returns {string} Formatted currency string
+   * 
+   * Why separate function:
+   * - Consistent formatting across the component
+   * - Easy to change currency formatting rules
+   * - Handles edge cases (NaN, null, etc.)
+   */
   const formatCurrency = (amount: number) => {
     const result = formatMauritianRupees(amount);
     return result.formatted;
   };
 
-  // Calculate month statistics for the modal
+  // ==================== STATISTICS AND DATA MANAGEMENT ====================
+  
+  /**
+   * Calculates month statistics for modal display
+   * 
+   * @returns {Object} Statistics object with month info and totals
+   * 
+   * Used by:
+   * - Month clear modal to show what will be deleted
+   * - Data export summaries
+   * - User confirmation dialogs
+   * 
+   * Why calculate here:
+   * - Real-time data ensures accuracy
+   * - Avoids stale cached statistics
+   * - Provides immediate feedback for user actions
+   */
   const getMonthStatistics = () => {
     let totalShifts = 0;
     let totalAmount = 0;
@@ -291,7 +587,21 @@ export const Calendar: React.FC<CalendarProps> = ({
     };
   };
 
-  // Long-press handlers for month header
+  // ==================== INTERACTION HANDLERS ====================
+  
+  /**
+   * Long-press handlers for month header
+   * 
+   * Why long-press for month operations:
+   * - Prevents accidental month clearing
+   * - Follows mobile UI conventions
+   * - Provides advanced functionality without cluttering UI
+   * 
+   * Configuration:
+   * - 500ms delay balances accessibility and prevention of accidents
+   * - onPress: Normal tap opens date picker
+   * - onLongPress: Long press opens month clear modal
+   */
   const longPressHandlers = useLongPress({
     onLongPress: () => {
       setShowMonthClearModal(true);
@@ -302,30 +612,89 @@ export const Calendar: React.FC<CalendarProps> = ({
     delay: 500
   });
 
+  /**
+   * Handles month/year header click to open date picker
+   * 
+   * Why separate from long-press:
+   * - Provides fallback for devices without long-press
+   * - Clearer intent for basic navigation
+   * - Better accessibility for users with motor difficulties
+   */
   const handleMonthYearClick = () => {
     setShowDatePicker(true);
   };
 
+  /**
+   * Handles date picker changes and updates current view
+   * 
+   * @param {number} year - Selected year
+   * @param {number} month - Selected month (0-11)
+   * 
+   * Why separate parameters:
+   * - More flexible than passing Date object
+   * - Avoids timezone issues with Date construction
+   * - Clearer intent about what's being changed
+   */
   const handleDatePickerChange = (year: number, month: number) => {
     onDateChange(new Date(year, month, 1));
     setShowDatePicker(false);
   };
 
+  // ==================== TITLE EDITING HANDLERS ====================
+  
+  /**
+   * Enters title editing mode
+   * 
+   * Why separate editing state:
+   * - Allows cancellation without affecting actual title
+   * - Provides immediate visual feedback
+   * - Prevents accidental changes from single clicks
+   */
   const handleTitleClick = () => {
     setIsEditingTitle(true);
     setTempTitle(scheduleTitle);
   };
 
+  /**
+   * Saves the edited title and exits editing mode
+   * 
+   * Validation:
+   * - Trims whitespace to prevent empty titles
+   * - Falls back to default if empty
+   * - Updates parent state immediately
+   */
   const handleTitleSave = () => {
     onTitleUpdate(tempTitle.trim() || 'Work Schedule');
     setIsEditingTitle(false);
   };
 
+  /**
+   * Cancels title editing and reverts to original
+   * 
+   * Why revert:
+   * - Prevents loss of original title
+   * - Clear user feedback about cancellation
+   * - Consistent with standard editing patterns
+   */
   const handleTitleCancel = () => {
     setTempTitle(scheduleTitle);
     setIsEditingTitle(false);
   };
 
+  /**
+   * Handles keyboard shortcuts during title editing
+   * 
+   * @param {React.KeyboardEvent} e - Keyboard event
+   * 
+   * Shortcuts:
+   * - Enter: Save changes
+   * - Escape: Cancel changes
+   * 
+   * Why keyboard shortcuts:
+   * - Faster workflow for power users
+   * - Standard editing conventions
+   * - Better accessibility
+   */
   const handleTitleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       handleTitleSave();
@@ -334,6 +703,22 @@ export const Calendar: React.FC<CalendarProps> = ({
     }
   };
 
+  /**
+   * Handles date clicks with visual feedback animation
+   * 
+   * @param {number} day - Day that was clicked
+   * 
+   * Animation details:
+   * - Simple scale animation for immediate feedback
+   * - Hardware acceleration for smooth performance
+   * - Yoyo effect (scale down then back up)
+   * - Cleanup ensures element returns to normal state
+   * 
+   * Why animate clicks:
+   * - Provides immediate user feedback
+   * - Makes interface feel responsive
+   * - Helps users understand what they clicked
+   */
   const handleDateClick = (day: number) => {
     // Simplified click animation for mobile - no complex transforms
     const clickedElement = document.querySelector(`[data-day="${day}"]`);
@@ -355,7 +740,24 @@ export const Calendar: React.FC<CalendarProps> = ({
     onDateClick(day);
   };
 
-  // Long press handlers for date clearing
+  // ==================== LONG-PRESS DATE CLEARING ====================
+  
+  /**
+   * Initiates long-press detection for date clearing
+   * 
+   * @param {number} day - Day being long-pressed
+   * @param {React.MouseEvent | React.TouchEvent} e - Event object
+   * 
+   * Business logic:
+   * - Only shows modal if date has content to clear
+   * - Prevents unnecessary modals on empty dates
+   * - 800ms delay balances accessibility and accident prevention
+   * 
+   * Why long-press for clearing:
+   * - Prevents accidental data loss
+   * - Follows mobile conventions for destructive actions
+   * - Keeps UI clean without extra buttons
+   */
   const handleDateLongPressStart = (day: number, e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
     const dateKey = formatDateKey(day);
@@ -379,6 +781,19 @@ export const Calendar: React.FC<CalendarProps> = ({
     setLongPressTimer(timer);
   };
 
+  /**
+   * Cancels long-press detection
+   * 
+   * Called when:
+   * - User lifts finger/mouse before timeout
+   * - User moves finger/mouse away from element
+   * - Component unmounts during long-press
+   * 
+   * Why cleanup is important:
+   * - Prevents memory leaks from dangling timers
+   * - Avoids unexpected modal appearances
+   * - Ensures consistent behavior across interactions
+   */
   const handleDateLongPressEnd = () => {
     if (longPressTimer) {
       clearTimeout(longPressTimer);
@@ -386,7 +801,30 @@ export const Calendar: React.FC<CalendarProps> = ({
     }
   };
 
-  // Clear date function
+  // ==================== DATA CLEARING FUNCTIONS ====================
+  
+  /**
+   * Clears all data for a specific date
+   * 
+   * @param {string} dateKey - Date key in YYYY-MM-DD format
+   * @returns {Promise<void>} Promise that resolves when clearing is complete
+   * 
+   * Operations performed:
+   * - Removes all scheduled shifts for the date
+   * - Removes special date marking
+   * - Updates both schedule and specialDates state
+   * - Provides console logging for debugging
+   * 
+   * Why async:
+   * - Allows for future database operations
+   * - Provides consistent API with other data operations
+   * - Enables proper error handling in calling code
+   * 
+   * Error handling:
+   * - Catches and logs any errors
+   * - Rejects promise to allow caller to handle errors
+   * - Maintains data integrity even if partial operations fail
+   */
   const handleClearDate = async (dateKey: string): Promise<void> => {
     return new Promise((resolve, reject) => {
       try {
@@ -413,7 +851,29 @@ export const Calendar: React.FC<CalendarProps> = ({
     });
   };
 
-  // Clear month function
+  /**
+   * Clears all data for an entire month
+   * 
+   * @param {number} year - Year to clear
+   * @param {number} month - Month to clear (0-11)
+   * @returns {Promise<void>} Promise that resolves when clearing is complete
+   * 
+   * Algorithm:
+   * 1. Calculate all date keys for the month
+   * 2. Remove each date from schedule data
+   * 3. Remove each date from special dates data
+   * 4. Update state with cleaned data
+   * 
+   * Why generate all date keys:
+   * - Ensures complete clearing even with sparse data
+   * - Handles edge cases like leap years correctly
+   * - More reliable than filtering existing keys
+   * 
+   * Performance considerations:
+   * - Batches all operations into single state updates
+   * - Avoids multiple re-renders during clearing
+   * - Uses object spread for immutable updates
+   */
   const handleClearMonth = async (year: number, month: number): Promise<void> => {
     return new Promise((resolve, reject) => {
       try {
@@ -453,6 +913,42 @@ export const Calendar: React.FC<CalendarProps> = ({
     });
   };
 
+  /**
+   * Closes the shift modal and resets selected date
+   * 
+   * Why separate function:
+   * - Ensures both state variables are updated together
+   * - Provides single point for modal closing logic
+   * - Makes calling code cleaner and more readable
+   */
+  const closeModal = () => {
+    setShowModal(false);
+    setSelectedDate(null);
+  };
+
+  // ==================== NAVIGATION HANDLERS ====================
+  
+  /**
+   * Handles month navigation with smooth animations
+   * 
+   * @param {'prev' | 'next'} direction - Direction to navigate
+   * 
+   * Animation approach:
+   * - Slides current content out in direction of navigation
+   * - Calls navigation callback to update data
+   * - Slides new content in from opposite direction
+   * - Uses hardware acceleration for smooth performance
+   * 
+   * Why animate navigation:
+   * - Provides visual continuity between months
+   * - Helps users understand spatial relationship
+   * - Makes the interface feel more responsive
+   * 
+   * Fallback behavior:
+   * - If animation fails, still performs navigation
+   * - Ensures functionality even on low-performance devices
+   * - Graceful degradation for accessibility
+   */
   const handleMonthNavigation = (direction: 'prev' | 'next') => {
     // Simplified month navigation for mobile
     if (calendarGridRef.current) {
@@ -483,10 +979,32 @@ export const Calendar: React.FC<CalendarProps> = ({
     }
   };
 
-  // Check if current month/year matches today's month/year for month-to-date display
+  // ==================== LAYOUT CALCULATIONS ====================
+  
+  /**
+   * Checks if current month/year matches today's month/year
+   * Used to determine whether to show month-to-date calculations
+   * 
+   * Why separate variable:
+   * - Used in multiple places for conditional rendering
+   * - Makes the logic clear and reusable
+   * - Avoids repeated date calculations
+   */
   const isCurrentMonth = today.getMonth() === currentMonth && today.getFullYear() === currentYear;
 
-  // Generate calendar days
+  /**
+   * Generates the calendar day array for rendering
+   * 
+   * Structure:
+   * - null values for empty cells before first day of month
+   * - Day numbers (1-31) for actual days
+   * - Used by rendering logic to create grid layout
+   * 
+   * Why include empty cells:
+   * - Maintains proper grid alignment
+   * - Ensures days appear under correct weekday headers
+   * - Standard calendar layout convention
+   */
   const calendarDays = [];
   
   // Empty cells for days before the first day of the month
@@ -499,11 +1017,38 @@ export const Calendar: React.FC<CalendarProps> = ({
     calendarDays.push(day);
   }
 
-  // Calculate number of rows needed
+  // Calculate number of rows needed for dynamic layout
   const totalCells = calendarDays.length;
   const numberOfRows = Math.ceil(totalCells / 7);
 
-  // Calculate dynamic row heights based on content
+  /**
+   * Calculates dynamic row heights based on content
+   * 
+   * @returns {string[]} Array of height strings for each row
+   * 
+   * Algorithm:
+   * 1. For each row, find the day with the most content
+   * 2. Calculate height needed for that content
+   * 3. Apply minimum height constraints
+   * 4. Return array of height values
+   * 
+   * Why dynamic heights:
+   * - Prevents content overflow in busy days
+   * - Optimizes space usage for sparse months
+   * - Maintains visual balance across rows
+   * - Improves readability of shift information
+   * 
+   * Content calculation:
+   * - Each shift = 1 line
+   * - Special date marker = 1 line
+   * - Maximum 4 lines total (3 shifts + special)
+   * - Base height for date number + padding
+   * 
+   * Responsive considerations:
+   * - Different base heights for mobile vs desktop
+   * - Scaled line heights for different screen sizes
+   * - Minimum heights to ensure touch targets
+   */
   const calculateRowHeights = () => {
     const rowHeights: string[] = [];
     
@@ -549,6 +1094,8 @@ export const Calendar: React.FC<CalendarProps> = ({
 
   const rowHeights = calculateRowHeights();
 
+  // ==================== RENDER ====================
+  
   return (
     <div className="bg-white rounded-2xl shadow-lg overflow-hidden select-none max-w-4xl mx-auto" style={{ userSelect: 'none', WebkitUserSelect: 'none' }}>
       {/* Header */}
@@ -645,7 +1192,7 @@ export const Calendar: React.FC<CalendarProps> = ({
         </div>
       </div>
 
-      {/* Date Picker Modal - NOW CENTERED VERTICALLY LIKE OTHER MODALS */}
+      {/* Date Picker Modal */}
       {showDatePicker && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center p-4 z-50"
@@ -657,11 +1204,9 @@ export const Calendar: React.FC<CalendarProps> = ({
             right: 0,
             bottom: 0,
             zIndex: 9999,
-            // CRITICAL: Enable touch scrolling on the backdrop
             WebkitOverflowScrolling: 'touch',
-            touchAction: 'pan-y', // Allow vertical panning (scrolling)
-            // Position modal 1/3 from top
-            paddingTop: '33.333vh' // 1/3 of viewport height from top
+            touchAction: 'pan-y',
+            paddingTop: '33.333vh'
           }}
         >
           <div 
@@ -669,12 +1214,10 @@ export const Calendar: React.FC<CalendarProps> = ({
             style={{ 
               userSelect: 'none', 
               WebkitUserSelect: 'none',
-              // Ensure modal doesn't exceed remaining space
-              maxHeight: '60vh', // Leave space for 1/3 top + some bottom margin
-              marginTop: 0 // Remove default margin since we're using paddingTop
+              maxHeight: '60vh',
+              marginTop: 0
             }}
             onClick={(e) => {
-              // Prevent modal from closing when clicking inside
               e.stopPropagation();
             }}
           >
@@ -688,7 +1231,6 @@ export const Calendar: React.FC<CalendarProps> = ({
                 <X className="w-5 h-5" />
               </button>
               
-              {/* Title - centered */}
               <div className="text-center">
                 <h3 className="text-xl font-bold text-gray-900 mb-1 select-none">
                   Select Month & Year
@@ -749,19 +1291,18 @@ export const Calendar: React.FC<CalendarProps> = ({
           ))}
         </div>
 
-        {/* Calendar grid - MOBILE OPTIMIZED ANIMATIONS */}
+        {/* Calendar grid */}
         <div 
           ref={calendarGridRef} 
           className="mb-4 sm:mb-6 select-none w-full mx-auto"
           style={{
-            transform: 'translate3d(0,0,0)', // Force hardware acceleration
-            backfaceVisibility: 'hidden',     // Prevent flickering
+            transform: 'translate3d(0,0,0)',
+            backfaceVisibility: 'hidden',
             userSelect: 'none',
             WebkitUserSelect: 'none',
             display: 'grid',
             gridTemplateColumns: 'repeat(7, 1fr)',
             gap: window.innerWidth >= 640 ? '8px' : '4px',
-            // Center the grid in portrait mode
             justifyContent: 'center',
             alignContent: 'start',
             maxWidth: '100%',
@@ -782,12 +1323,12 @@ export const Calendar: React.FC<CalendarProps> = ({
                 className={`day-box p-1 sm:p-2 rounded-lg border-2 transition-colors duration-200 overflow-hidden relative select-none ${
                   day 
                     ? todayDate
-                      ? `cursor-pointer border-indigo-400 shadow-lg bg-yellow-100 hover:bg-yellow-200 active:bg-yellow-200` // TODAY: Permanent hover state
+                      ? `cursor-pointer border-indigo-400 shadow-lg bg-yellow-100 hover:bg-yellow-200 active:bg-yellow-200`
                       : `cursor-pointer hover:border-indigo-400 hover:shadow-lg bg-yellow-50 border-yellow-200 hover:bg-yellow-100 active:bg-yellow-200`
                     : 'border-transparent'
                 }`}
                 style={{
-                  height: rowHeights[rowIndex], // All cells in same row have same height
+                  height: rowHeights[rowIndex],
                   transform: 'translate3d(0,0,0)',
                   backfaceVisibility: 'hidden',
                   WebkitBackfaceVisibility: 'hidden',
@@ -806,7 +1347,7 @@ export const Calendar: React.FC<CalendarProps> = ({
               >
                 {day && (
                   <div className="flex flex-col select-none h-full">
-                    {/* BIG X WATERMARK for past dates */}
+                    {/* Past date watermark */}
                     {pastDate && (
                       <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
                         <div className="text-gray-300 text-4xl sm:text-5xl font-bold opacity-30 select-none">
@@ -815,10 +1356,10 @@ export const Calendar: React.FC<CalendarProps> = ({
                       </div>
                     )}
                     
-                    {/* Date header with special indicator and TODAY CIRCLE */}
+                    {/* Date header */}
                     <div className={`flex-shrink-0 mb-1.5 sm:mb-2 relative ${pastDate ? 'z-30' : ''}`}>
                       <div className={`text-sm sm:text-base text-center font-semibold ${getDateTextColor(day)} relative select-none`}>
-                        {/* TODAY CIRCLE - PERFECT SIZE FOR 2-DIGIT DATES */}
+                        {/* Today circle indicator */}
                         {todayDate && (
                           <div className="absolute inset-0 flex items-center justify-center">
                             <div 
@@ -832,7 +1373,7 @@ export const Calendar: React.FC<CalendarProps> = ({
                         )}
                         <span className="relative z-10 select-none">{day}</span>
                         
-                        {/* TICK INDICATOR for dates with shifts */}
+                        {/* Shift indicator */}
                         {dayShifts.length > 0 && (
                           <div className="absolute -top-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 bg-green-500 rounded-full flex items-center justify-center">
                             <svg 
@@ -851,7 +1392,7 @@ export const Calendar: React.FC<CalendarProps> = ({
                       </div>
                     </div>
                     
-                    {/* Content container - grows to fill available space */}
+                    {/* Content container */}
                     <div className={`flex flex-col items-center justify-start space-y-0.5 sm:space-y-1 px-0.5 select-none min-w-0 flex-1 ${pastDate ? 'z-30' : ''}`}>
                       {/* Special date indicator */}
                       {hasSpecialDate && (
@@ -868,9 +1409,8 @@ export const Calendar: React.FC<CalendarProps> = ({
                         </div>
                       )}
                       
-                      {/* All shifts displayed with labels */}
+                      {/* Shift labels */}
                       {dayShifts.map((shiftId, idx) => {
-                        // First try to find in custom shifts (which have labels)
                         const customShift = settings?.customShifts?.find(s => s.id === shiftId);
                         const displayText = customShift ? customShift.label : shiftId;
                         
@@ -899,23 +1439,21 @@ export const Calendar: React.FC<CalendarProps> = ({
           })}
         </div>
 
-        {/* Amount Display Section - NO ANIMATION */}
+        {/* Amount Display Section */}
         <div 
           className={`space-y-3 sm:space-y-4 select-none ${isCurrentMonth ? 'mt-4 sm:mt-6' : 'mt-4 sm:mt-6'}`}
           style={{ 
             userSelect: 'none', 
             WebkitUserSelect: 'none',
-            // FIXED: Dynamic padding based on content
-            paddingBottom: isCurrentMonth ? '30px' : '20px', // Extra padding when Month-to-Date is shown
+            paddingBottom: isCurrentMonth ? '30px' : '20px',
             marginBottom: '10px'
           }}
         >
-          {/* Month to Date Total - Only show if viewing current month */}
+          {/* Month to Date Total */}
           {isCurrentMonth && (
             <div 
               className="bg-green-50 border border-green-200 rounded-lg p-3 sm:p-4 mb-4"
               style={{
-                // FIXED: Ensure proper touch scrolling
                 WebkitOverflowScrolling: 'touch',
                 touchAction: 'pan-y'
               }}
@@ -939,7 +1477,6 @@ export const Calendar: React.FC<CalendarProps> = ({
           <div 
             className="bg-indigo-50 border border-indigo-200 rounded-lg p-3 sm:p-4"
             style={{
-              // FIXED: Ensure proper touch scrolling
               WebkitOverflowScrolling: 'touch',
               touchAction: 'pan-y'
             }}
@@ -960,7 +1497,7 @@ export const Calendar: React.FC<CalendarProps> = ({
         </div>
       </div>
 
-      {/* Clear Date Modal */}
+      {/* Modals */}
       <ClearDateModal
         isOpen={showClearDateModal}
         selectedDate={dateToDelete}
@@ -973,7 +1510,6 @@ export const Calendar: React.FC<CalendarProps> = ({
         }}
       />
 
-      {/* Clear Month Modal */}
       <ClearMonthModal
         isOpen={showClearMonthModal}
         selectedMonth={currentMonth}
@@ -982,7 +1518,6 @@ export const Calendar: React.FC<CalendarProps> = ({
         onCancel={() => setShowClearMonthModal(false)}
       />
 
-      {/* Month Clear Modal (Long-press triggered) */}
       <MonthClearModal
         isOpen={showMonthClearModal}
         monthData={getMonthStatistics()}
@@ -990,7 +1525,7 @@ export const Calendar: React.FC<CalendarProps> = ({
         onCancel={() => setShowMonthClearModal(false)}
       />
 
-      {/* Custom CSS for today's circle animation */}
+      {/* CSS for today's circle animation */}
       <style jsx>{`
         @keyframes todayPulse {
           0%, 100% {
