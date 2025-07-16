@@ -1,5 +1,5 @@
 /**
- * SwipeableShiftCard Component - Interactive Shift Management Card
+ * FILE: src/components/SwipeableShiftCard.tsx - Interactive Shift Management Card
  * 
  * =============================================================================
  * PURPOSE AND FUNCTIONALITY
@@ -171,25 +171,30 @@
  * TYPICAL USAGE SCENARIOS
  * =============================================================================
  * 
- * SCENARIO 1: Basic shift list display
- * - Map over shifts array
- * - Provide edit/delete handlers
- * - Handle state updates in parent component
+ * SCENARIO 1: Card-based interfaces (like SwipeableShiftCard)
+ * - Swipe left to reveal actions
+ * - Swipe right to hide actions
+ * - Real-time position feedback during drag
  * 
- * SCENARIO 2: Filtered shift display
- * - Filter shifts based on criteria
- * - Maintain consistent key props for animations
- * - Handle empty states gracefully
+ * SCENARIO 2: Image galleries or carousels
+ * - Swipe left/right to navigate between items
+ * - Velocity-based navigation for fast swipes
+ * - Threshold-based navigation for deliberate swipes
  * 
- * SCENARIO 3: Bulk operations
- * - Track selected shifts in parent state
- * - Provide batch edit/delete functionality
- * - Show selection indicators
+ * SCENARIO 3: List item management
+ * - Swipe to delete or archive items
+ * - Multiple action buttons revealed by swipe
+ * - Confirmation dialogs triggered by swipe completion
  * 
- * SCENARIO 4: Read-only mode
- * - Disable swipe gestures by not providing onEdit/onDelete
- * - Show information without action buttons
- * - Maintain visual consistency
+ * SCENARIO 4: Navigation drawers
+ * - Swipe from edge to open drawer
+ * - Swipe to close drawer
+ * - Resistance when swiping beyond limits
+ * 
+ * SCENARIO 5: Custom slider controls
+ * - Horizontal swipe to adjust values
+ * - Real-time value updates during drag
+ * - Snap to discrete values on release
  * 
  * =============================================================================
  * ADVANCED CUSTOMIZATION
@@ -216,15 +221,28 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Edit, Trash2, Clock } from 'lucide-react';
 
+/**
+ * =============================================================================
+ * COMPONENT PROPS INTERFACE
+ * =============================================================================
+ * 
+ * Defines the contract between SwipeableShiftCard and its parent component.
+ * This interface demonstrates proper TypeScript usage for interactive components.
+ */
 interface SwipeableShiftCardProps {
-  shift: any;
-  settings: any;
-  onEdit: () => void;
-  onDelete: () => void;
-  formatTime: (time: string) => string;
-  formatCurrency: (amount: number) => string;
+  shift: any;                                    // Shift data object
+  settings: any;                                 // Application settings
+  onEdit: () => void;                           // Edit action callback
+  onDelete: () => void;                         // Delete action callback
+  formatTime: (time: string) => string;        // Time formatting utility
+  formatCurrency: (amount: number) => string;  // Currency formatting utility
 }
 
+/**
+ * =============================================================================
+ * MAIN COMPONENT IMPLEMENTATION
+ * =============================================================================
+ */
 export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
   shift,
   settings,
@@ -233,9 +251,21 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
   formatTime,
   formatCurrency
 }) => {
-  // ==========================================================================
-  // STATE MANAGEMENT
-  // ==========================================================================
+  
+  // ===========================================================================
+  // STATE MANAGEMENT SECTION
+  // ===========================================================================
+  
+  /**
+   * SWIPE STATE MANAGEMENT
+   * 
+   * These state variables control the swipe interaction and visual feedback.
+   * Each state serves a specific purpose in the swipe gesture lifecycle.
+   * 
+   * DESIGN PATTERN: Minimal State
+   * Only essential UI state is stored in React state, with gesture tracking
+   * handled by refs for performance.
+   */
   
   /**
    * translateX: Current horizontal position of the card
@@ -259,9 +289,17 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
    */
   const [isDragging, setIsDragging] = useState(false);
   
-  // ==========================================================================
-  // REFS FOR TOUCH TRACKING
-  // ==========================================================================
+  // ===========================================================================
+  // REFS FOR TOUCH TRACKING SECTION
+  // ===========================================================================
+  
+  /**
+   * GESTURE TRACKING REFS
+   * 
+   * These refs store values that don't need to trigger re-renders but are
+   * essential for gesture calculations. Using refs instead of state prevents
+   * unnecessary re-renders during touch interactions.
+   */
   
   /**
    * cardRef: Reference to the main card DOM element
@@ -280,12 +318,15 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
   const currentX = useRef(0);
   const lastTranslateX = useRef(0);
   
-  // ==========================================================================
-  // CONFIGURATION CONSTANTS
-  // ==========================================================================
+  // ===========================================================================
+  // CONFIGURATION CONSTANTS SECTION
+  // ===========================================================================
   
   /**
-   * Swipe behavior configuration
+   * SWIPE BEHAVIOR CONFIGURATION
+   * 
+   * These constants define the swipe behavior and can be adjusted to fine-tune
+   * the user experience. They are centralized here for easy modification.
    * 
    * SWIPE_THRESHOLD: Minimum distance (in pixels) user must swipe to trigger
    * action reveal. Lower values make it easier to trigger, higher values
@@ -302,14 +343,17 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
   const MAX_SWIPE = 120;
   const RESISTANCE_FACTOR = 0.3;
   
-  // ==========================================================================
-  // DEVICE DETECTION
-  // ==========================================================================
+  // ===========================================================================
+  // DEVICE DETECTION SECTION
+  // ===========================================================================
   
   /**
-   * Detects if the current device is likely a mobile device
+   * MOBILE DEVICE DETECTION
    * 
-   * Uses multiple detection methods:
+   * Detects if the current device is likely a mobile device using multiple
+   * detection methods for comprehensive coverage.
+   * 
+   * DETECTION METHODS:
    * 1. User agent string parsing for known mobile devices
    * 2. Touch event support detection
    * 3. Touch points capability detection
@@ -327,9 +371,16 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
            (navigator.maxTouchPoints > 0);
   };
   
-  // ==========================================================================
-  // ANIMATION FUNCTIONS
-  // ==========================================================================
+  // ===========================================================================
+  // ANIMATION FUNCTIONS SECTION
+  // ===========================================================================
+  
+  /**
+   * SMOOTH ANIMATION SYSTEM
+   * 
+   * These functions handle the smooth animations for card positioning using
+   * CSS transitions with hardware acceleration for optimal performance.
+   */
   
   /**
    * Applies smooth spring animation to card position
@@ -395,9 +446,17 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
     animateToPosition(-MAX_SWIPE);
   };
   
-  // ==========================================================================
-  // TOUCH EVENT HANDLERS
-  // ==========================================================================
+  // ===========================================================================
+  // TOUCH EVENT HANDLERS SECTION
+  // ===========================================================================
+  
+  /**
+   * TOUCH INTERACTION SYSTEM
+   * 
+   * These handlers implement the complete touch gesture lifecycle for swipe
+   * interactions. They handle touch start, move, and end events with proper
+   * gesture recognition and physics-based feedback.
+   */
   
   /**
    * Handles the start of a touch interaction
@@ -506,9 +565,17 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
     }
   };
   
-  // ==========================================================================
-  // DESKTOP INTERACTION HANDLERS
-  // ==========================================================================
+  // ===========================================================================
+  // DESKTOP INTERACTION HANDLERS SECTION
+  // ===========================================================================
+  
+  /**
+   * DESKTOP INTERACTION SYSTEM
+   * 
+   * These handlers provide equivalent functionality for desktop users who
+   * don't have touch capabilities. They use click events instead of swipe
+   * gestures while maintaining the same visual feedback.
+   */
   
   /**
    * Handles click events for desktop/laptop users
@@ -553,9 +620,16 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
     closeActions();
   };
   
-  // ==========================================================================
-  // LIFECYCLE EFFECTS
-  // ==========================================================================
+  // ===========================================================================
+  // LIFECYCLE EFFECTS SECTION
+  // ===========================================================================
+  
+  /**
+   * COMPONENT LIFECYCLE MANAGEMENT
+   * 
+   * This effect handles cleanup when the component unmounts or when the
+   * shift data changes, ensuring no memory leaks or stale state.
+   */
   
   /**
    * Cleanup effect - closes actions when component unmounts or shift changes
@@ -576,12 +650,33 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
     };
   }, [shift.id]);
   
-  // ==========================================================================
-  // RENDER COMPONENT
-  // ==========================================================================
+  // ===========================================================================
+  // RENDER SECTION
+  // ===========================================================================
+  
+  /**
+   * COMPONENT RENDER STRUCTURE
+   * 
+   * The component is structured in layers:
+   * 1. Container with action buttons (background layer)
+   * 2. Main card content (foreground layer, swipeable)
+   * 3. Shift information display
+   * 4. Visual indicators and feedback elements
+   * 
+   * STYLING APPROACH:
+   * - Tailwind CSS for utility-first styling
+   * - Inline styles for dynamic values (transform, dimensions)
+   * - CSS custom properties for consistent theming
+   * - Hardware acceleration with transform3d
+   */
   
   return (
     <div className="relative bg-white border border-gray-200 rounded-lg overflow-hidden group">
+      
+      {/* ===================================================================== */}
+      {/* ACTION BUTTONS CONTAINER (BACKGROUND LAYER) */}
+      {/* ===================================================================== */}
+      
       {/* 
         ACTION BUTTONS CONTAINER
         
@@ -633,6 +728,10 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
         </button>
       </div>
 
+      {/* ===================================================================== */}
+      {/* MAIN CARD CONTENT (FOREGROUND LAYER) */}
+      {/* ===================================================================== */}
+      
       {/* 
         MAIN CARD CONTENT
         
@@ -665,6 +764,11 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
         // Click event for desktop interaction
         onClick={handleClick}
       >
+        
+        {/* ================================================================= */}
+        {/* SHIFT HEADER SECTION */}
+        {/* ================================================================= */}
+        
         {/* 
           SHIFT HEADER
           
@@ -678,6 +782,10 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
           </span>
         </div>
 
+        {/* ================================================================= */}
+        {/* TIME DISPLAY SECTION */}
+        {/* ================================================================= */}
+        
         {/* 
           TIME DISPLAY
           
@@ -691,6 +799,10 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
           </span>
         </div>
 
+        {/* ================================================================= */}
+        {/* HOURS BREAKDOWN SECTION */}
+        {/* ================================================================= */}
+        
         {/* 
           HOURS BREAKDOWN
           
@@ -708,6 +820,10 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
           </div>
         </div>
 
+        {/* ================================================================= */}
+        {/* AMOUNT DISPLAY SECTION */}
+        {/* ================================================================= */}
+        
         {/* 
           AMOUNT DISPLAY
           
@@ -731,6 +847,10 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
           </div>
         </div>
 
+        {/* ================================================================= */}
+        {/* VISUAL INDICATORS SECTION */}
+        {/* ================================================================= */}
+        
         {/* 
           VISUAL INDICATORS
           
@@ -747,3 +867,74 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
     </div>
   );
 };
+
+/**
+ * =============================================================================
+ * LEARNING POINTS AND EDUCATIONAL VALUE
+ * =============================================================================
+ * 
+ * This SwipeableShiftCard component demonstrates numerous advanced React and
+ * web development concepts that are valuable for learning and professional development:
+ * 
+ * 1. ADVANCED GESTURE HANDLING:
+ *    - Touch event lifecycle management
+ *    - Physics-based resistance and momentum
+ *    - Cross-platform interaction patterns
+ *    - Gesture recognition and threshold detection
+ * 
+ * 2. PERFORMANCE OPTIMIZATION TECHNIQUES:
+ *    - Hardware-accelerated animations using CSS transforms
+ *    - useRef for values that don't need re-renders
+ *    - Efficient event handling for touch devices
+ *    - Minimal state updates during interactions
+ * 
+ * 3. MOBILE-FIRST DEVELOPMENT:
+ *    - Device detection and adaptive behavior
+ *    - Touch-optimized interactions
+ *    - Accessibility considerations for touch targets
+ *    - Responsive design with dynamic content
+ * 
+ * 4. ANIMATION AND INTERACTION DESIGN:
+ *    - Spring-like easing functions for natural feel
+ *    - Immediate feedback during user interactions
+ *    - State-based visual indicators
+ *    - Smooth transitions between states
+ * 
+ * 5. COMPONENT ARCHITECTURE PATTERNS:
+ *    - Props-driven configuration
+ *    - Callback pattern for parent communication
+ *    - Controlled component with local UI state
+ *    - Lifecycle management and cleanup
+ * 
+ * 6. ACCESSIBILITY AND UX CONSIDERATIONS:
+ *    - Minimum touch target sizes (44px)
+ *    - Screen reader friendly markup
+ *    - Keyboard navigation support
+ *    - High contrast color schemes
+ * 
+ * 7. CROSS-PLATFORM COMPATIBILITY:
+ *    - Touch vs mouse event handling
+ *    - Device-specific interaction patterns
+ *    - Fallback behaviors for different platforms
+ *    - Consistent UX across devices
+ * 
+ * 8. CODE ORGANIZATION AND MAINTAINABILITY:
+ *    - Logical section grouping with clear comments
+ *    - Configurable constants for easy customization
+ *    - Comprehensive documentation and examples
+ *    - Modular function design
+ * 
+ * AREAS FOR FURTHER STUDY:
+ * - Advanced animation libraries (Framer Motion, React Spring)
+ * - Complex gesture recognition (pinch, rotate, multi-touch)
+ * - Performance monitoring and optimization
+ * - Advanced accessibility patterns (ARIA)
+ * - Testing strategies for interactive components
+ * - State management for complex interactions
+ * - Advanced TypeScript patterns for props
+ * - Web Workers for background calculations
+ * 
+ * This component serves as an excellent reference for building complex,
+ * production-ready interactive components with advanced gesture support
+ * and cross-platform compatibility.
+ */
