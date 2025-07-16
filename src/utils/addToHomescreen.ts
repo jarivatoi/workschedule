@@ -49,7 +49,7 @@ export class AddToHomescreen {
       startDelay: 2000,
       lifespan: 15000,
       displayPace: 1440, // 24 hours in minutes
-      mustShowCustomPrompt: true, // Force show by default
+      mustShowCustomPrompt: false, // Don't force show by default
       ...options
     };
     
@@ -113,21 +113,42 @@ export class AddToHomescreen {
   }
 
   canPrompt(): boolean {
-    // More permissive logic for better prompt showing
-    const canShow = !this.isStandaloneMode && 
-                   this.modalDisplayCount < this.maxModalDisplayCount;
+    // Check if app is already installed (standalone mode)
+    if (this.isStandaloneMode) {
+      console.log('🚫 App already installed in standalone mode');
+      return false;
+    }
+    
+    // Check display count limit
+    if (this.modalDisplayCount >= this.maxModalDisplayCount) {
+      console.log('🚫 Maximum display count reached');
+      return false;
+    }
+    
+    // Check if enough time has passed since last display
+    const lastDisplayTime = localStorage.getItem('addToHomescreenLastDisplay');
+    if (lastDisplayTime) {
+      const timeSinceLastDisplay = Date.now() - parseInt(lastDisplayTime, 10);
+      const minInterval = (this.options.displayPace || 1440) * 60 * 1000; // Convert minutes to milliseconds
+      
+      if (timeSinceLastDisplay < minInterval) {
+        console.log('🚫 Not enough time passed since last display');
+        return false;
+      }
+    }
+    
+    const canShow = true;
     
     console.log('✅ Can Prompt Check:', {
       isStandalone: this.isStandaloneMode,
       displayCount: this.modalDisplayCount,
       maxCount: this.maxModalDisplayCount,
       isMobile: this.isMobile, 
-      mustShow: this.options.mustShowCustomPrompt,
+      lastDisplayTime,
       canShow
     });
     
-    // Show if conditions are met OR if forced
-    return canShow || this.options.mustShowCustomPrompt === true;
+    return canShow;
   }
 
   show(customMessage?: string): void {
@@ -136,7 +157,6 @@ export class AddToHomescreen {
     if (!this.canPrompt()) {
       console.log('🚫 AddToHomescreen: Cannot show prompt', {
         canPrompt: this.canPrompt(),
-        mustShow: this.options.mustShowCustomPrompt,
         displayCount: this.modalDisplayCount,
         maxCount: this.maxModalDisplayCount
       });
@@ -146,6 +166,7 @@ export class AddToHomescreen {
     console.log('✅ Showing Add to Homescreen modal');
     this.modalDisplayCount++;
     localStorage.setItem('addToHomescreenModalCount', this.modalDisplayCount.toString());
+    localStorage.setItem('addToHomescreenLastDisplay', Date.now().toString());
 
     const message = customMessage || this.getDefaultMessage();
     this.showModal(message);
@@ -155,6 +176,7 @@ export class AddToHomescreen {
     this.modalDisplayCount = 0;
     localStorage.removeItem('addToHomescreenModalCount');
     localStorage.removeItem('addToHomescreenFirstVisit');
+    localStorage.removeItem('addToHomescreenLastDisplay');
     console.log('🧹 Cleared Add to Homescreen display count');
   }
 
