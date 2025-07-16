@@ -634,8 +634,7 @@ export const Calendar: React.FC<CalendarProps> = ({
           {/* Month/Year Button */}
           <div className="flex-1 flex justify-center">
             <button
-              {...longPressHandlers}
-              className="text-lg sm:text-xl font-semibold text-gray-700 text-center hover:bg-gray-100 px-3 sm:px-4 py-2 rounded-lg transition-colors duration-200 select-none"
+              {...(hasCurrentMonthContent() ? longPressHandlers : { onClick: () => setShowDatePicker(true) })}
               style={{ 
                 userSelect: 'none', 
                 WebkitUserSelect: 'none',
