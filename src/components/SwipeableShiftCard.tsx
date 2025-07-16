@@ -204,7 +204,6 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
         {/* Amount Display */}
         <div className="text-center p-3 bg-indigo-50 rounded-lg">
           <div className="flex items-center justify-center mb-1">
-            <DollarSign className="w-4 h-4 text-indigo-600 mr-1" />
             <span className="text-xs text-indigo-600 font-medium">Total Amount</span>
           </div>
           <div className="text-lg font-bold text-indigo-800">
@@ -215,12 +214,6 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
           </div>
         </div>
 
-        {/* Swipe Hint */}
-        {!showActions && (
-          <div className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
-            <div className="text-xs">← Swipe</div>
-          </div>
-        )}
       </div>
     </div>
   );
