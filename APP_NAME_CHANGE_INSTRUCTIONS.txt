@@ -1,0 +1,278 @@
+APPLICATION NAME CHANGE INSTRUCTIONS
+=====================================
+
+This document provides step-by-step instructions for changing the application name
+from the current "Work Schedule" to any new name you desire.
+
+OVERVIEW
+========
+Changing the application name requires updating multiple files across different
+platforms (Web, PWA, Android). This ensures consistency across all deployment
+targets and user touchpoints.
+
+FILES TO MODIFY
+===============
+
+1. WEB APPLICATION FILES
+   =====================
+
+   A) index.html
+      Location: /index.html
+      Changes needed:
+      - Line ~6: <title>Work Schedule</title>
+      - Line ~44: <meta name="apple-mobile-web-app-title" content="Work Schedule">
+      
+      Instructions:
+      1. Open index.html in your text editor
+      2. Find: <title>Work Schedule</title>
+      3. Replace "Work Schedule" with your new app name
+      4. Find: <meta name="apple-mobile-web-app-title" content="Work Schedule">
+      5. Replace "Work Schedule" with your new app name
+      6. Save the file
+
+   B) package.json
+      Location: /package.json
+      Changes needed:
+      - Line ~2: "name": "work-schedule"
+      
+      Instructions:
+      1. Open package.json in your text editor
+      2. Find: "name": "work-schedule"
+      3. Replace "work-schedule" with your new app name (use lowercase, hyphens for spaces)
+      4. Example: "my-awesome-app" for "My Awesome App"
+      5. Save the file
+
+2. PWA (PROGRESSIVE WEB APP) FILES
+   ===============================
+
+   A) public/manifest.json
+      Location: /public/manifest.json
+      Changes needed:
+      - Line ~2: "name": "Work Schedule"
+      - Line ~3: "short_name": "Work Schedule"
+      - Line ~4: "description": "Professional work schedule management system by NARAYYA"
+      
+      Instructions:
+      1. Open public/manifest.json in your text editor
+      2. Find: "name": "Work Schedule"
+      3. Replace "Work Schedule" with your new app name
+      4. Find: "short_name": "Work Schedule"
+      5. Replace "Work Schedule" with a shorter version (max 12 characters recommended)
+      6. Find the description line and update it to describe your new app
+      7. Save the file
+
+   B) public/sw.js (Service Worker)
+      Location: /public/sw.js
+      Changes needed:
+      - Line ~75: <h1>📱 Work Schedule</h1>
+      
+      Instructions:
+      1. Open public/sw.js in your text editor
+      2. Find: <h1>📱 Work Schedule</h1>
+      3. Replace "Work Schedule" with your new app name
+      4. Save the file
+
+3. ADD TO HOMESCREEN FILES
+   =======================
+
+   A) src/utils/addToHomescreen.ts
+      Location: /src/utils/addToHomescreen.ts
+      Changes needed:
+      - Line ~35: appName: 'Work Schedule'
+      
+      Instructions:
+      1. Open src/utils/addToHomescreen.ts in your text editor
+      2. Find: appName: 'Work Schedule'
+      3. Replace 'Work Schedule' with your new app name
+      4. Save the file
+
+4. ANDROID APPLICATION FILES
+   =========================
+
+   A) android/app/src/main/res/values/strings.xml
+      Location: /android/app/src/main/res/values/strings.xml
+      Changes needed:
+      - Line ~3: <string name="app_name">Work Schedule</string>
+      - Line ~4: <string name="title_activity_main">Work Schedule</string>
+      
+      Instructions:
+      1. Open android/app/src/main/res/values/strings.xml in your text editor
+      2. Find: <string name="app_name">Work Schedule</string>
+      3. Replace "Work Schedule" with your new app name
+      4. Find: <string name="title_activity_main">Work Schedule</string>
+      5. Replace "Work Schedule" with your new app name
+      6. Save the file
+
+   B) capacitor.config.ts
+      Location: /capacitor.config.ts
+      Changes needed:
+      - Line ~4: appName: 'Work Schedule'
+      
+      Instructions:
+      1. Open capacitor.config.ts in your text editor
+      2. Find: appName: 'Work Schedule'
+      3. Replace 'Work Schedule' with your new app name
+      4. Save the file
+
+STEP-BY-STEP PROCESS
+===================
+
+STEP 1: PREPARE YOUR NEW NAME
+-----------------------------
+Before starting, decide on:
+- Full app name: "My New App Name"
+- Short name: "MyApp" (for PWA, max 12 characters)
+- Package name: "my-new-app-name" (lowercase, hyphens only)
+- Description: Brief description of what your app does
+
+STEP 2: UPDATE WEB FILES
+------------------------
+1. Open index.html
+   - Update <title> tag
+   - Update apple-mobile-web-app-title meta tag
+
+2. Open package.json
+   - Update "name" field with package-friendly name
+
+STEP 3: UPDATE PWA FILES
+------------------------
+1. Open public/manifest.json
+   - Update "name" field
+   - Update "short_name" field
+   - Update "description" field
+
+2. Open public/sw.js
+   - Update the <h1> tag in the offline page
+
+STEP 4: UPDATE ADD TO HOMESCREEN
+--------------------------------
+1. Open src/utils/addToHomescreen.ts
+   - Update appName in the constructor defaults
+
+STEP 5: UPDATE ANDROID FILES
+----------------------------
+1. Open android/app/src/main/res/values/strings.xml
+   - Update app_name string
+   - Update title_activity_main string
+
+2. Open capacitor.config.ts
+   - Update appName field
+
+STEP 6: REBUILD AND TEST
+-----------------------
+After making all changes:
+
+1. Clear browser cache:
+   - Press Ctrl+Shift+R (Windows/Linux) or Cmd+Shift+R (Mac)
+
+2. Rebuild the web application:
+   npm run build
+
+3. Test PWA installation:
+   - Open the app in a mobile browser
+   - Try adding to home screen
+   - Verify the new name appears
+
+4. Rebuild Android APK (if applicable):
+   npm run android:build
+   npx cap open android
+
+VERIFICATION CHECKLIST
+======================
+
+After completing all changes, verify the new name appears in:
+
+□ Browser tab title
+□ PWA installation prompt
+□ PWA home screen icon name
+□ Android app name
+□ Android app launcher
+□ Add to homescreen prompts
+□ Offline page title
+□ Package.json name field
+
+COMMON NAMING CONVENTIONS
+=========================
+
+Full Name Examples:
+- "Task Manager Pro"
+- "My Business App"
+- "Employee Scheduler"
+
+Short Name Examples (max 12 chars):
+- "TaskPro"
+- "MyBizApp"
+- "EmpSched"
+
+Package Name Examples (lowercase, hyphens):
+- "task-manager-pro"
+- "my-business-app"
+- "employee-scheduler"
+
+TROUBLESHOOTING
+===============
+
+ISSUE: Browser still shows old name
+SOLUTION: Clear browser cache completely or try incognito/private mode
+
+ISSUE: PWA installation shows old name
+SOLUTION: 
+1. Uninstall existing PWA
+2. Clear browser cache
+3. Rebuild app with npm run build
+4. Try installing PWA again
+
+ISSUE: Android app shows old name
+SOLUTION:
+1. Uninstall existing Android app
+2. Clean and rebuild: cd android && ./gradlew clean
+3. Rebuild APK in Android Studio
+4. Install new APK
+
+ISSUE: Changes not taking effect
+SOLUTION:
+1. Double-check all files were saved
+2. Restart development server: npm run dev
+3. Hard refresh browser: Ctrl+Shift+R
+4. Check for typos in modified files
+
+ADVANCED CUSTOMIZATION
+======================
+
+If you want to change the app ID (com.narayya.workschedule):
+
+WARNING: Changing app ID requires more extensive changes and may break
+existing installations. Only do this if you understand the implications.
+
+Files to modify:
+- capacitor.config.ts (appId field)
+- android/app/build.gradle (applicationId)
+- android/app/src/main/AndroidManifest.xml (package attribute)
+- All Java files in android/app/src/main/java/
+
+BACKUP RECOMMENDATION
+====================
+
+Before making changes:
+1. Create a backup of your entire project
+2. Or commit current changes to version control
+3. Test changes in a development environment first
+
+This ensures you can revert if something goes wrong.
+
+FINAL NOTES
+===========
+
+- Always test on multiple devices after name changes
+- Consider SEO implications if changing web app name
+- Update any documentation or marketing materials
+- Inform users about the name change if app is already deployed
+- Consider gradual rollout for production applications
+
+For additional help or questions, refer to:
+- Capacitor documentation: https://capacitorjs.com/docs
+- PWA documentation: https://web.dev/progressive-web-apps/
+- Android app naming guidelines: https://developer.android.com/guide
+
+Last updated: [Current Date]
+Version: 1.0
