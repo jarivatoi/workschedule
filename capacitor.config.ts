@@ -4,45 +4,33 @@ const config: CapacitorConfig = {
   appId: 'com.narayya.workschedule',
   appName: 'Work Schedule',
   webDir: 'dist',
-  bundledWebRuntime: false,
   server: {
     androidScheme: 'https'
   },
   plugins: {
     SplashScreen: {
-      launchShowDuration: 3000,
+      launchShowDuration: 2000,
       launchAutoHide: true,
-      backgroundColor: "#667eea",
+      backgroundColor: "#6366f1",
       androidSplashResourceName: "splash",
       androidScaleType: "CENTER_CROP",
       showSpinner: false,
-      androidSpinnerStyle: "large",
-      iosSpinnerStyle: "small",
-      spinnerColor: "#999999",
       splashFullScreen: true,
       splashImmersive: true,
-      layoutName: "launch_screen",
-      useDialog: true
+      useDialog: false
     },
     StatusBar: {
-      style: "dark",
-      backgroundColor: "#667eea"
+      style: "light",
+      backgroundColor: "#6366f1"
     },
     Keyboard: {
       resize: "body",
-      style: "dark",
+      style: "light",
       resizeOnFullScreen: true
-    },
-    App: {
-      launchUrl: ""
     }
   },
   android: {
     buildOptions: {
-      keystorePath: undefined,
-      keystorePassword: undefined,
-      keystoreAlias: undefined,
-      keystoreAliasPassword: undefined,
       releaseType: "APK"
     }
   }
