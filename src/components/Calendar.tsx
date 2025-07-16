@@ -5,7 +5,7 @@ import { gsap } from 'gsap';
 import { SHIFTS } from '../constants';
 import { DaySchedule, SpecialDates } from '../types';
 import { ClearDateModal } from './ClearDateModal';
-import { DeleteMonthModal } from './ClearMonthModal';
+import { DeleteMonthModal } from './DeleteMonthModal';
 import { MonthClearModal } from './MonthClearModal';
 import { formatMauritianRupees } from '../utils/currency';
 import { useLongPress } from '../hooks/useLongPress';
