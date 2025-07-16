@@ -58,10 +58,6 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
 
       {/* Main card content */}
       <div
-        className={`relative bg-white p-4 transition-all duration-300 cursor-pointer hover:bg-gray-50 ${
-          showActions ? 'transform -translate-x-[120px]' : ''
-        }`}
-        onClick={toggleActions}
       >
         {/* Shift Header */}
         <div className="flex items-center justify-between mb-3">
@@ -105,8 +101,8 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
         </div>
 
         {/* Instructions */}
-        <div className="mt-2 text-center text-xs text-gray-500">
-          💻 Click to show/hide actions
+        <div className="mt-2 text-center text-xs text-gray-500 select-none">
+          {showActions ? 'Tap Edit or Delete' : 'Tap to show actions'}
         </div>
 
         {/* Visual indicator when actions are shown */}
