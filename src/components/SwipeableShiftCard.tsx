@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Clock, Edit, Trash2 } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Edit, Trash2, Clock } from 'lucide-react';
 
 interface SwipeableShiftCardProps {
   shift: any;
@@ -18,211 +18,138 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
   formatTime,
   formatCurrency
 }) => {
-  const [translateX, setTranslateX] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
+  const [offset, setOffset] = useState(0);
   const [showActions, setShowActions] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   
-  const cardRef = useRef<HTMLDivElement>(null);
   const startX = useRef(0);
-  const startY = useRef(0);
-  const currentX = useRef(0);
-  const isHorizontalGesture = useRef(false);
-  const dragStarted = useRef(false);
+  const currentOffset = useRef(0);
+  
+  const MAX_OFFSET = 120;
+  const THRESHOLD = 60;
 
-  const SWIPE_THRESHOLD = 50;
-  const MAX_SWIPE = 120;
-
-  // Reset swipe
-  const resetSwipe = () => {
-    setTranslateX(0);
-    setShowActions(false);
-    setIsDragging(false);
-    isHorizontalGesture.current = false;
-    dragStarted.current = false;
-  };
-
-  // Universal start handler
-  const handleStart = (clientX: number, clientY: number) => {
-    console.log('🎯 Start drag at:', { x: clientX, y: clientY });
-    startX.current = clientX;
-    startY.current = clientY;
-    currentX.current = clientX;
-    setIsDragging(true);
-    isHorizontalGesture.current = false;
-    dragStarted.current = false;
-  };
-
-  // Universal move handler
-  const handleMove = (clientX: number, clientY: number) => {
-    if (!isDragging) return;
-
-    currentX.current = clientX;
-    const deltaX = currentX.current - startX.current; // Right movement = positive, Left movement = negative
-    const deltaY = Math.abs(startY.current - clientY);
-    
-    console.log('🎯 Move:', { 
-      deltaX, 
-      deltaY, 
-      isDragging, 
-      startX: startX.current, 
-      currentX: currentX.current,
-      direction: deltaX > 0 ? 'right' : 'left'
-    });
-    
-    // Determine if this is a horizontal gesture
-    if (Math.abs(deltaX) > 5 && Math.abs(deltaX) > deltaY) {
-      isHorizontalGesture.current = true;
-      dragStarted.current = true;
-      
-      // Only allow left swipe (negative deltaX, but we want positive translateX)
-      if (deltaX < 0) {
-        const clampedOffset = Math.min(Math.abs(deltaX), MAX_SWIPE);
-        setTranslateX(clampedOffset);
-        console.log('🎯 Setting translateX:', clampedOffset, 'from deltaX:', deltaX);
-      } else {
-        setTranslateX(0);
-        console.log('🎯 Resetting translateX (wrong direction)');
-      }
-    }
-  };
-
-  // Universal end handler
-  const handleEnd = () => {
-    console.log('🎯 End drag, translateX:', translateX, 'threshold:', SWIPE_THRESHOLD, 'showActions will be:', translateX > SWIPE_THRESHOLD);
-    setIsDragging(false);
-    
-    if (isHorizontalGesture.current && dragStarted.current) {
-      if (translateX > SWIPE_THRESHOLD) {
-        // Show actions
-        setTranslateX(MAX_SWIPE);
-        setShowActions(true);
-        console.log('🎯 Showing actions');
-      } else {
-        // Snap back
-        setTranslateX(0);
-        setShowActions(false);
-        console.log('🎯 Snapping back');
-      }
-    } else {
-      resetSwipe();
-    }
-    
-    isHorizontalGesture.current = false;
-    dragStarted.current = false;
-  };
-
-  // Mouse event handlers
+  // Simple mouse handlers
   const handleMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault();
-    console.log('🖱️ Mouse down');
-    handleStart(e.clientX, e.clientY);
+    console.log('🖱️ Mouse down at:', e.clientX);
+    setIsDragging(true);
+    startX.current = e.clientX;
+    currentOffset.current = offset;
     
-    // Add global mouse event listeners
-    const handleMouseMove = (event: MouseEvent) => {
-      event.preventDefault();
-      handleMove(event.clientX, event.clientY);
-    };
-    
-    const handleMouseUp = (event: MouseEvent) => {
-      console.log('🖱️ Mouse up');
-      handleEnd();
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-    
+    // Add global listeners
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
+    
+    e.preventDefault();
   };
 
-  // Touch event handlers
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!isDragging) return;
+    
+    const deltaX = startX.current - e.clientX; // Left drag = positive
+    const newOffset = Math.max(0, Math.min(MAX_OFFSET, currentOffset.current + deltaX));
+    
+    console.log('🖱️ Moving:', { deltaX, newOffset });
+    setOffset(newOffset);
+  };
+
+  const handleMouseUp = () => {
+    console.log('🖱️ Mouse up, offset:', offset);
+    setIsDragging(false);
+    
+    // Snap to position
+    if (offset > THRESHOLD) {
+      setOffset(MAX_OFFSET);
+      setShowActions(true);
+    } else {
+      setOffset(0);
+      setShowActions(false);
+    }
+    
+    // Remove global listeners
+    document.removeEventListener('mousemove', handleMouseMove);
+    document.removeEventListener('mouseup', handleMouseUp);
+  };
+
+  // Touch handlers
   const handleTouchStart = (e: React.TouchEvent) => {
     const touch = e.touches[0];
-    console.log('👆 Touch start');
-    handleStart(touch.clientX, touch.clientY);
+    console.log('👆 Touch start at:', touch.clientX);
+    setIsDragging(true);
+    startX.current = touch.clientX;
+    currentOffset.current = offset;
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging) return;
+    
     const touch = e.touches[0];
+    const deltaX = startX.current - touch.clientX; // Left drag = positive
+    const newOffset = Math.max(0, Math.min(MAX_OFFSET, currentOffset.current + deltaX));
     
-    // Prevent default only for horizontal gestures
-    if (isHorizontalGesture.current && dragStarted.current) {
-      e.preventDefault();
+    console.log('👆 Touch moving:', { deltaX, newOffset });
+    setOffset(newOffset);
+    
+    if (newOffset > 0) {
+      e.preventDefault(); // Prevent scrolling when swiping
     }
-    
-    handleMove(touch.clientX, touch.clientY);
   };
 
   const handleTouchEnd = () => {
-    console.log('👆 Touch end');
-    handleEnd();
-  };
-
-  // Handle action clicks
-  const handleEdit = (e: React.MouseEvent | React.TouchEvent) => {
-    e.stopPropagation();
-    console.log('✏️ Edit clicked');
-    resetSwipe();
-    onEdit();
-  };
-
-  const handleDelete = (e: React.MouseEvent | React.TouchEvent) => {
-    e.stopPropagation();
-    console.log('🗑️ Delete clicked');
-    resetSwipe();
-    onDelete();
-  };
-
-  // Close swipe when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
-      if (cardRef.current && !cardRef.current.contains(event.target as Node)) {
-        resetSwipe();
-      }
-    };
-
-    if (showActions) {
-      document.addEventListener('mousedown', handleClickOutside);
-      document.addEventListener('touchstart', handleClickOutside);
-      return () => {
-        document.removeEventListener('mousedown', handleClickOutside);
-        document.removeEventListener('touchstart', handleClickOutside);
-      };
+    console.log('👆 Touch end, offset:', offset);
+    setIsDragging(false);
+    
+    // Snap to position
+    if (offset > THRESHOLD) {
+      setOffset(MAX_OFFSET);
+      setShowActions(true);
+    } else {
+      setOffset(0);
+      setShowActions(false);
     }
-  }, [showActions]);
+  };
+
+  // Double click for easy access on desktop
+  const handleDoubleClick = () => {
+    console.log('🖱️ Double click');
+    if (showActions) {
+      setOffset(0);
+      setShowActions(false);
+    } else {
+      setOffset(MAX_OFFSET);
+      setShowActions(true);
+    }
+  };
+
+  // Close actions
+  const closeActions = () => {
+    setOffset(0);
+    setShowActions(false);
+  };
 
   return (
-    <div 
-      ref={cardRef}
-      className="relative bg-white border border-gray-200 rounded-lg overflow-hidden select-none"
-      style={{
-        userSelect: 'none',
-        WebkitUserSelect: 'none',
-        cursor: isDragging ? 'grabbing' : 'grab'
-      }}
-    >
-      {/* Action buttons background */}
+    <div className="relative bg-white border border-gray-200 rounded-lg overflow-hidden">
+      {/* Action buttons - positioned absolutely behind the card */}
       <div 
         className="absolute right-0 top-0 bottom-0 flex"
-        style={{
-          width: `${MAX_SWIPE}px`,
-          transform: `translateX(${MAX_SWIPE - translateX}px)`,
-          transition: isDragging ? 'none' : 'transform 0.3s ease-out',
-          zIndex: 1
-        }}
+        style={{ width: MAX_OFFSET }}
       >
         <button
-          onClick={handleEdit}
-          onTouchEnd={handleEdit}
-          className="flex-1 bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center transition-colors duration-200"
-          style={{ minWidth: '60px' }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit();
+            closeActions();
+          }}
+          className="flex-1 bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center"
         >
           <Edit className="w-5 h-5" />
         </button>
         <button
-          onClick={handleDelete}
-          onTouchEnd={handleDelete}
-          className="flex-1 bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-colors duration-200"
-          style={{ minWidth: '60px' }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+            closeActions();
+          }}
+          className="flex-1 bg-red-500 hover:bg-red-600 text-white flex items-center justify-center"
         >
           <Trash2 className="w-5 h-5" />
         </button>
@@ -230,21 +157,21 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
 
       {/* Main card content */}
       <div
-        className="relative bg-white p-4 cursor-pointer select-none"
+        className={`relative bg-white p-4 transition-transform duration-200 ${
+          isDragging ? 'cursor-grabbing' : 'cursor-grab'
+        }`}
         style={{
-          transform: `translateX(-${translateX}px)`, // Negative because we want card to move left
-          transition: isDragging ? 'none' : 'transform 0.3s ease-out',
+          transform: `translateX(-${offset}px)`,
           userSelect: 'none',
-          WebkitUserSelect: 'none',
-          zIndex: 2,
-          // Add visual debugging
+          // Visual debugging
           border: isDragging ? '2px solid red' : 'none'
         }}
         onMouseDown={handleMouseDown}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        onClick={resetSwipe}
+        onDoubleClick={handleDoubleClick}
+        onClick={closeActions}
       >
         {/* Shift Header */}
         <div className="flex items-center justify-between mb-3">
@@ -285,6 +212,11 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
               (shift.overtimeHours || 0) * ((settings.hourlyRate || 0) * (settings.overtimeMultiplier || 1.5))
             )}
           </div>
+        </div>
+
+        {/* Instructions */}
+        <div className="mt-2 text-center text-xs text-gray-500">
+          💻 Double-click or 📱 Swipe left to edit
         </div>
       </div>
     </div>
