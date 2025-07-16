@@ -1,6 +1,6 @@
 {
-  "name": "X-ray ANWH",
-  "short_name": "X-ray ANWH",
+  "name": "Work Schedule",
+  "short_name": "Work Schedule",
   "description": "Professional work schedule management system by NARAYYA",
   "start_url": "https://jarivatoi.github.io/workschedule/",
   "display": "standalone",
