@@ -5,7 +5,7 @@ import { gsap } from 'gsap';
 import { SHIFTS } from '../constants';
 import { DaySchedule, SpecialDates } from '../types';
 import { ClearDateModal } from './ClearDateModal';
-import { ClearMonthModal } from './ClearMonthModal';
+import { DeleteMonthModal } from './ClearMonthModal';
 import { MonthClearModal } from './MonthClearModal';
 import { formatMauritianRupees } from '../utils/currency';
 import { useLongPress } from '../hooks/useLongPress';
@@ -981,7 +981,7 @@ export const Calendar: React.FC<CalendarProps> = ({
       />
 
       {/* Clear Month Modal */}
-      <ClearMonthModal
+      <DeleteMonthModal
         isOpen={showClearMonthModal}
         selectedMonth={currentMonth}
         selectedYear={currentYear}
