@@ -103,8 +103,13 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
   const handleHourlyRateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    
     // Allow empty string or valid decimal numbers with up to 2 decimal places
-    if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
+    // Also prevent leading zeros (except for "0." cases)
+    if (value === '' || 
+        (value === '0') || 
+        (value.startsWith('0.') && /^0\.\d{0,2}$/.test(value)) ||
+        (/^[1-9]\d*\.?\d{0,2}$/.test(value))) {
       const numericValue = value === '' ? 0 : parseFloat(value) || 0;
       setHourlyRateValue(numericValue);
       onUpdateHourlyRate?.(numericValue);
