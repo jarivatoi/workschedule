@@ -50,6 +50,7 @@ export const Calendar: React.FC<CalendarProps> = ({
   const [showMonthClearModal, setShowMonthClearModal] = useState(false);
   const [dateToDelete, setDateToDelete] = useState<string | null>(null);
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+  const [isLongPressActive, setIsLongPressActive] = useState(false);
   const calendarGridRef = useRef<HTMLDivElement>(null);
   
   const today = new Date();
@@ -295,34 +296,56 @@ export const Calendar: React.FC<CalendarProps> = ({
   // Long-press handlers for month header
   const longPressHandlers = useLongPress({
     onLongPress: () => {
-      // Only show clear modal if there's content in the current month
-      if (hasCurrentMonthContent()) {
+      setIsLongPressActive(true);
+      // Only show modal if month has data to clear
+      if (hasMonthData()) {
         setShowMonthClearModal(true);
       }
+      // Reset flag after a delay
+      setTimeout(() => setIsLongPressActive(false), 500);
     },
     onPress: () => {
-      setShowDatePicker(true);
+      // Only trigger single press if long press wasn't active
+      if (!isLongPressActive) {
+        setTimeout(() => {
+          if (!isLongPressActive) {
+            setShowDatePicker(true);
+          }
+        }, 50);
+      }
     },
     delay: 500
   });
 
-  // Check if current month has any content (shifts or special dates)
-  const hasCurrentMonthContent = () => {
+  // Fallback click handler for Android devices
+  const handleMonthYearFallbackClick = (e: React.MouseEvent) => {
+    // Only handle if it's a mouse click (not touch) and no long press is active
+    if (e.type === 'click' && !isLongPressActive) {
+      setTimeout(() => {
+        if (!isLongPressActive && !showDatePicker) {
+          setShowDatePicker(true);
+        }
+      }, 100);
+    }
+  };
+
+  // Check if current month has any data (shifts or special dates)
+  const hasMonthData = () => {
     // Check for shifts in current month
-    const hasShifts = Object.keys(schedule).some(dateKey => {
+    const hasShifts = Object.entries(schedule).some(([dateKey, dayShifts]) => {
       const workDate = new Date(dateKey);
-      const shifts = schedule[dateKey];
       return workDate.getMonth() === currentMonth && 
              workDate.getFullYear() === currentYear && 
-             shifts && shifts.length > 0;
+             dayShifts.length > 0 && 
+             dayShifts.some(shiftId => shiftId.trim() !== '');
     });
     
     // Check for special dates in current month
-    const hasSpecialDates = Object.keys(specialDates).some(dateKey => {
+    const hasSpecialDates = Object.entries(specialDates).some(([dateKey, isSpecial]) => {
       const workDate = new Date(dateKey);
       return workDate.getMonth() === currentMonth && 
              workDate.getFullYear() === currentYear && 
-             specialDates[dateKey] === true;
+             isSpecial === true;
     });
     
     return hasShifts || hasSpecialDates;
@@ -634,10 +657,13 @@ export const Calendar: React.FC<CalendarProps> = ({
           {/* Month/Year Button */}
           <div className="flex-1 flex justify-center">
             <button
-              {...(hasCurrentMonthContent() ? longPressHandlers : { onClick: () => setShowDatePicker(true) })}
+              {...longPressHandlers}
+              onClick={handleMonthYearFallbackClick}
               style={{ 
                 userSelect: 'none', 
                 WebkitUserSelect: 'none',
+                touchAction: 'manipulation',
+                WebkitTapHighlightColor: 'transparent'
               }}
             >
               <span className="select-none">{monthNames[currentMonth]} {currentYear}</span>
@@ -672,99 +698,113 @@ export const Calendar: React.FC<CalendarProps> = ({
 
       {/* Date Picker Modal - NOW CENTERED VERTICALLY LIKE OTHER MODALS */}
       {showDatePicker && (
-        createPortal(
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          onClick={(e) => {
+            console.log('📱 Backdrop clicked');
+            handleDatePickerBackdropClick(e);
+          }}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 9999,
+            pointerEvents: 'auto',
+            // CRITICAL: Enable touch scrolling on the backdrop
+            WebkitOverflowScrolling: 'touch',
+            touchAction: 'pan-y' // Allow vertical panning (scrolling)
+          }}
+        >
           <div 
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[99999]"
-            onClick={handleDatePickerBackdropClick}
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              zIndex: 99999,
-              // CRITICAL: Enable touch scrolling on the backdrop
-              WebkitOverflowScrolling: 'touch',
-              touchAction: 'pan-y', // Allow vertical panning (scrolling)
-              // Perfect centering - no padding adjustments
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
+            className="bg-white rounded-2xl shadow-2xl max-w-md w-full select-none" 
+            style={{ 
+              userSelect: 'none', 
+              WebkitUserSelect: 'none'
+            }}
+            onClick={(e) => {
+              console.log('📱 Modal content clicked - preventing close');
+              // Prevent modal from closing when clicking inside
+              e.stopPropagation();
             }}
           >
-            <div 
-              className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 select-none" 
-              style={{ 
-                userSelect: 'none', 
-                WebkitUserSelect: 'none',
-                // Ensure modal doesn't exceed screen height
-                maxHeight: '90vh',
-                // Perfect centering with margin auto
-                margin: '0 auto'
-              }}
-              onClick={(e) => {
-                // Prevent modal from closing when clicking inside
-                e.stopPropagation();
-              }}
-            >
-              {/* Header with close button */}
-              <div className="relative p-6 pb-4 border-b border-gray-200">
-                <button
-                  onClick={() => setShowDatePicker(false)}
-                  className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors duration-200 select-none"
-                  style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
-                >
-                  <X className="w-5 h-5" />
-                </button>
-                
-                {/* Title - centered */}
-                <div className="text-center">
-                  <h3 className="text-xl font-bold text-gray-900 mb-1 select-none">
-                    Select Month & Year
-                  </h3>
-                </div>
-              </div>
-
-              {/* Content */}
-              <div className="p-6">
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2 text-center select-none">Year</label>
-                    <select
-                      value={currentYear}
-                      onChange={(e) => handleDatePickerChange(Number(e.target.value), currentMonth)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center transition-colors duration-200"
-                    >
-                      {Array.from({ length: 10 }, (_, i) => currentYear - 5 + i).map(year => (
-                        <option key={year} value={year}>{year}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2 text-center select-none">Month</label>
-                    <select
-                      value={currentMonth}
-                      onChange={(e) => handleDatePickerChange(currentYear, Number(e.target.value))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center transition-colors duration-200"
-                    >
-                      {monthNames.map((month, index) => (
-                        <option key={index} value={index}>{month}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowDatePicker(false)}
-                  className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition-colors duration-200 active:scale-95 select-none"
-                  style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
-                >
-                  <span className="select-none">Close</span>
-                </button>
+            {/* Header with close button */}
+            <div className="relative p-6 pb-4 border-b border-gray-200">
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('📱 Close button clicked');
+                  setShowDatePicker(false);
+                }}
+                className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors duration-200 select-none"
+                style={{ 
+                  userSelect: 'none', 
+                  WebkitUserSelect: 'none',
+                  touchAction: 'manipulation',
+                  WebkitTapHighlightColor: 'transparent'
+                }}
+              >
+                <X className="w-5 h-5" />
+              </button>
+              
+              {/* Title - centered */}
+              <div className="text-center">
+                <h3 className="text-xl font-bold text-gray-900 mb-1 select-none">
+                  Select Month & Year
+                </h3>
               </div>
             </div>
-          </div>,
-          document.body
-        )
+
+            {/* Content */}
+            <div className="p-6">
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2 text-center select-none">Year</label>
+                  <select
+                    value={currentYear}
+                    onChange={(e) => handleDatePickerChange(Number(e.target.value), currentMonth)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center transition-colors duration-200"
+                  >
+                    {Array.from({ length: 10 }, (_, i) => currentYear - 5 + i).map(year => (
+                      <option key={year} value={year}>{year}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2 text-center select-none">Month</label>
+                  <select
+                    value={currentMonth}
+                    onChange={(e) => handleDatePickerChange(currentYear, Number(e.target.value))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center transition-colors duration-200"
+                  >
+                    {monthNames.map((month, index) => (
+                      <option key={index} value={index}>{month}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('📱 Close modal button clicked');
+                  setShowDatePicker(false);
+                }}
+                className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition-colors duration-200 active:scale-95 select-none"
+                style={{ 
+                  userSelect: 'none', 
+                  WebkitUserSelect: 'none',
+                  touchAction: 'manipulation',
+                  WebkitTapHighlightColor: 'transparent'
+                }}
+              >
+                <span className="select-none">Close</span>
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Calendar Body */}
@@ -864,7 +904,7 @@ export const Calendar: React.FC<CalendarProps> = ({
                         <span className="relative z-10 select-none">{day}</span>
                         
                         {/* TICK INDICATOR for dates with shifts */}
-                        {dayShifts.length > 0 && (
+                        {dayShifts.length > 0 && dayShifts.some(shiftId => shiftId.trim() !== '') && (
                           <div className="absolute -top-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 bg-green-500 rounded-full flex items-center justify-center">
                             <svg 
                               className="w-2 h-2 sm:w-2.5 sm:h-2.5 text-white" 
@@ -901,11 +941,8 @@ export const Calendar: React.FC<CalendarProps> = ({
                       
                       {/* All shifts displayed with labels */}
                       {dayShifts.map((shiftId, idx) => {
-                        // First try to find in custom shifts (which have labels)
-                        const customShift = settings?.customShifts?.find(s => s.id === shiftId);
-                        const displayText = customShift ? customShift.label : shiftId;
-                        
-                        return (
+                        const shift = getShiftDisplay(shiftId);
+                        return shift ? (
                           <div
                             key={`${shiftId}-${idx}`}
                             className={`shift-text text-[8px] sm:text-[11px] font-bold leading-tight text-black flex-shrink-0 w-full select-none whitespace-nowrap overflow-hidden ${pastDate ? 'opacity-60' : ''}`}
@@ -918,9 +955,9 @@ export const Calendar: React.FC<CalendarProps> = ({
                               WebkitUserSelect: 'none'
                             }}
                           >
-                            <div className="text-center select-none truncate px-0.5">{displayText}</div>
+                            <div className="text-center select-none truncate px-0.5">{shift.time}</div>
                           </div>
-                        );
+                        ) : null;
                       })}
                     </div>
                   </div>
