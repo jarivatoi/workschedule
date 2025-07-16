@@ -743,17 +743,6 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
         {isOpen && (
           <div className="absolute top-2 right-2 w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
         )}
-        
-        {/* Swipe capability hint for mobile users */}
-        {isMobileDevice() && !isOpen && (
-          <div className="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-30">
-            <div className="flex space-x-1">
-              <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
-              <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
-              <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
