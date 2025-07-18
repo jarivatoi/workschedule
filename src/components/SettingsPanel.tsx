@@ -108,6 +108,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     setHourlyRateValue(settings.hourlyRate || 0);
   }, [settings.hourlyRate]);
 
+  // Force update of hourly rate display
+  const [forceUpdate, setForceUpdate] = useState(0);
   // ============================================================================
   // FORMULA CALCULATION SECTION
   // ============================================================================
@@ -259,9 +261,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         // Valid direct number
         console.log('🔢 Direct number detected:', directNumber);
         setHourlyRateValue(directNumber);
-        if (onUpdateHourlyRate) {
-          onUpdateHourlyRate(directNumber);
-        }
+        onUpdateHourlyRate?.(directNumber);
+        setForceUpdate(prev => prev + 1); // Force re-render
         setFormulaError('');
         return;
       }
@@ -279,9 +280,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
       if (newHourlyRate > 0) {
         console.log('📐 Formula calculated:', newHourlyRate);
         setHourlyRateValue(newHourlyRate);
-        if (onUpdateHourlyRate) {
-          onUpdateHourlyRate(newHourlyRate);
-        }
+        onUpdateHourlyRate?.(newHourlyRate);
+        setForceUpdate(prev => prev + 1); // Force re-render
         setFormulaError('');
       } else {
         setFormulaError('Bad formula. Please enter a direct number or use valid operators: +, -, *, /, x, ÷');
@@ -504,7 +504,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               </div>
               <input
                 type="text"
-                value={(settings.hourlyRate || 0).toFixed(2)}
+                value={(hourlyRateValue || 0).toFixed(2)}
+                key={forceUpdate} // Force re-render when forceUpdate changes
                 readOnly
                 className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg bg-gray-100 text-center cursor-not-allowed pointer-events-none"
                 tabIndex={-1}
