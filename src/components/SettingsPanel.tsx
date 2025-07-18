@@ -257,7 +257,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     if (!isNaN(directNumber) && trimmedFormula === directNumber.toString()) {
       // Valid direct number
       setHourlyRateValue(directNumber);
-      onUpdateHourlyRate?.(directNumber);
+      if (onUpdateHourlyRate) {
+        onUpdateHourlyRate(directNumber);
+      }
       setFormulaError('');
       return;
     }
@@ -272,7 +274,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     const newHourlyRate = parseHourlyRateFormula(trimmedFormula, settings.basicSalary);
     if (newHourlyRate > 0) {
       setHourlyRateValue(newHourlyRate);
-      onUpdateHourlyRate?.(newHourlyRate);
+      if (onUpdateHourlyRate) {
+        onUpdateHourlyRate(newHourlyRate);
+      }
       setFormulaError('');
     } else {
       setFormulaError('Bad formula. Please enter a direct number or use valid operators: +, -, *, /, x, ÷');
@@ -286,13 +290,14 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   const processFormula = () => {
     if (!hourlyRateFormula.trim()) return;
     
-    // Validate formula syntax
     // Check if it's a direct number input
     const directNumber = parseFloat(hourlyRateFormula);
     if (!isNaN(directNumber) && hourlyRateFormula.trim() === directNumber.toString()) {
       // Direct number input
       setHourlyRateValue(directNumber);
-      onUpdateHourlyRate?.(directNumber);
+      if (onUpdateHourlyRate) {
+        onUpdateHourlyRate(directNumber);
+      }
       setFormulaError('');
       return;
     }
@@ -307,13 +312,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     const newHourlyRate = parseHourlyRateFormula(hourlyRateFormula, settings.basicSalary);
     if (newHourlyRate > 0) {
       setHourlyRateValue(newHourlyRate);
-      onUpdateHourlyRate?.(newHourlyRate);
+      if (onUpdateHourlyRate) {
+        onUpdateHourlyRate(newHourlyRate);
+      }
       setFormulaError('');
-      
-      // Force re-render by triggering a state update
-      setTimeout(() => {
-        setHourlyRateValue(newHourlyRate);
-      }, 0);
     } else {
       setFormulaError('Formula resulted in invalid value');
     }
