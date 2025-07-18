@@ -181,9 +181,12 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
    * - Defaults to 0 for invalid input
    */
   const handleBasicSalaryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Extract only digits from input
-    const value = e.target.value.replace(/[^\d]/g, '');
-    const numericValue = parseInt(value) || 0;
+    // Get the raw input value and remove any non-digit characters
+    const rawValue = e.target.value;
+    const cleanValue = rawValue.replace(/[^\d]/g, '');
+    const numericValue = parseInt(cleanValue) || 0;
+    
+    console.log('💰 Salary change:', { rawValue, cleanValue, numericValue });
     
     // Update salary through parent callback
     onUpdateBasicSalary(numericValue);
@@ -202,7 +205,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
    * Removes formatting for easier editing
    */
   const handleBasicSalaryFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.target.value = settings.basicSalary.toString();
+    // Show raw number without formatting for easier editing
+    const rawValue = settings.basicSalary.toString();
+    e.target.value = rawValue;
+    console.log('🎯 Salary focus - showing raw value:', rawValue);
   };
 
   /**
@@ -211,7 +217,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
    * Provides better visual presentation of large numbers
    */
   const handleBasicSalaryBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.target.value = settings.basicSalary.toLocaleString('en-US');
+    // Format with thousand separators
+    const formattedValue = settings.basicSalary.toLocaleString('en-US');
+    e.target.value = formattedValue;
+    console.log('💫 Salary blur - formatting to:', formattedValue);
   };
 
   // ============================================================================
@@ -516,8 +525,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               </div>
               <input
                 type="text"
-                value={(settings.hourlyRate || 0).toFixed(2)}
-                key={forceUpdate} // Force re-render when forceUpdate changes
+                value={`${(settings.hourlyRate || 0).toFixed(2)}`}
+                key={`hourly-rate-${forceUpdate}-${settings.hourlyRate}`} // Force re-render when value changes
                 readOnly
                 className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg bg-gray-100 text-center cursor-not-allowed pointer-events-none"
                 tabIndex={-1}
