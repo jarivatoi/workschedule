@@ -261,9 +261,12 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         // Valid direct number
         console.log('🔢 Direct number detected:', directNumber);
         setHourlyRateValue(directNumber);
-        onUpdateHourlyRate?.(directNumber);
-        setForceUpdate(prev => prev + 1); // Force re-render
+       if (onUpdateHourlyRate) {
+         onUpdateHourlyRate(directNumber);
+       }
         setFormulaError('');
+       // Force update of the display
+       setForceUpdate(prev => prev + 1);
         return;
       }
     }
@@ -280,9 +283,12 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
       if (newHourlyRate > 0) {
         console.log('📐 Formula calculated:', newHourlyRate);
         setHourlyRateValue(newHourlyRate);
-        onUpdateHourlyRate?.(newHourlyRate);
-        setForceUpdate(prev => prev + 1); // Force re-render
+       if (onUpdateHourlyRate) {
+         onUpdateHourlyRate(newHourlyRate);
+       }
         setFormulaError('');
+       // Force update of the display
+       setForceUpdate(prev => prev + 1);
       } else {
         setFormulaError('Bad formula. Please enter a direct number or use valid operators: +, -, *, /, x, ÷');
       }
