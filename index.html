@@ -107,9 +107,9 @@
     <script>
       // Enhanced service worker registration with error handling
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js', {
+        navigator.serviceWorker.register('./sw.js', {
           updateViaCache: 'none',
-          scope: '/'
+          scope: './'
         }).then((registration) => {
           console.log('SW: Registered successfully');
           
