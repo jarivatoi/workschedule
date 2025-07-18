@@ -255,7 +255,25 @@ export const Calendar: React.FC<CalendarProps> = ({
   };
 
   const getShiftDisplay = (shiftId: string) => {
-    return SHIFTS.find(shift => shift.id === shiftId);
+    // First check if it's a predefined shift
+    const predefinedShift = SHIFTS.find(shift => shift.id === shiftId);
+    if (predefinedShift) {
+      return predefinedShift;
+    }
+    
+    // Then check if it's a custom shift
+    const customShift = settings?.customShifts?.find(shift => shift.id === shiftId);
+    if (customShift) {
+      return {
+        id: customShift.id,
+        label: customShift.label,
+        time: `${customShift.fromTime}-${customShift.toTime}`,
+        color: 'bg-purple-100 text-purple-800 border-purple-200',
+        displayColor: 'text-purple-600'
+      };
+    }
+    
+    return null;
   };
 
   const getDateTextColor = (day: number) => {
