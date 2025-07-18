@@ -249,8 +249,14 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     const trimmedFormula = sanitizedFormula.trim();
     
     if (!trimmedFormula) {
-      // Clear formula, don't update hourly rate
+      // No formula - use default calculation: Basic Salary x12/52/40
+      const defaultHourlyRate = (settings.basicSalary * 12) / 52 / 40;
+      console.log('🔄 Using default formula (x12/52/40):', defaultHourlyRate);
+      if (onUpdateHourlyRate) {
+        onUpdateHourlyRate(defaultHourlyRate);
+      }
       setFormulaError('');
+      setForceUpdate(prev => prev + 1);
       return;
     }
     
@@ -310,7 +316,14 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     const trimmedFormula = hourlyRateFormula.trim();
     
     if (!trimmedFormula) {
+      // No formula - use default calculation: Basic Salary x12/52/40
+      const defaultHourlyRate = (settings.basicSalary * 12) / 52 / 40;
+      console.log('🔄 No formula on blur, using default formula:', defaultHourlyRate);
+      if (onUpdateHourlyRate) {
+        onUpdateHourlyRate(defaultHourlyRate);
+      }
       setFormulaError('');
+      setForceUpdate(prev => prev + 1);
       return;
     }
     
@@ -328,13 +341,40 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
        // Force update of the display
        setForceUpdate(prev => prev + 1);
         return;
+      } else {
+        // Invalid direct number - use default calculation
+        const defaultHourlyRate = (settings.basicSalary * 12) / 52 / 40;
+        console.log('🔄 Invalid direct number on blur, using default formula:', defaultHourlyRate);
+        if (onUpdateHourlyRate) {
+          onUpdateHourlyRate(defaultHourlyRate);
+        }
+        setFormulaError('Using default calculation (Basic Salary × 12 ÷ 52 ÷ 40)');
+        setForceUpdate(prev => prev + 1);
+        return;
+      } else {
+        // Invalid direct number - use default calculation
+        const defaultHourlyRate = (settings.basicSalary * 12) / 52 / 40;
+        console.log('🔄 Invalid direct number, using default formula:', defaultHourlyRate);
+        if (onUpdateHourlyRate) {
+          onUpdateHourlyRate(defaultHourlyRate);
+        }
+        setFormulaError('');
+        setForceUpdate(prev => prev + 1);
+        return;
       }
     }
     
     // Check if it's a valid formula (has operators)
     if (/[+\-*/x÷]/.test(trimmedFormula)) {
       if (!validateFormula(trimmedFormula)) {
-        setFormulaError('Bad formula. Please enter a direct number or use valid operators: +, -, *, /, x, ÷');
+        // Invalid formula - use default calculation
+        const defaultHourlyRate = (settings.basicSalary * 12) / 52 / 40;
+        console.log('🔄 Invalid formula on blur, using default formula:', defaultHourlyRate);
+        if (onUpdateHourlyRate) {
+          onUpdateHourlyRate(defaultHourlyRate);
+        }
+        setFormulaError('Bad formula - using default calculation (Basic Salary × 12 ÷ 52 ÷ 40)');
+        setForceUpdate(prev => prev + 1);
         return;
       }
       
@@ -344,17 +384,44 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         console.log('📐 Formula calculated:', newHourlyRate);
         setHourlyRateValue(newHourlyRate);
        if (onUpdateHourlyRate) {
-         onUpdateHourlyRate(newHourlyRate);
+          // Invalid formula result - use default calculation
+          const defaultHourlyRate = (settings.basicSalary * 12) / 52 / 40;
+          console.log('🔄 Invalid formula result, using default formula:', defaultHourlyRate);
+          if (onUpdateHourlyRate) {
+            onUpdateHourlyRate(defaultHourlyRate);
+          }
+        // Invalid formula result - use default calculation
+        const defaultHourlyRate = (settings.basicSalary * 12) / 52 / 40;
+        console.log('🔄 Invalid formula result on blur, using default formula:', defaultHourlyRate);
+        if (onUpdateHourlyRate) {
+          onUpdateHourlyRate(defaultHourlyRate);
+        }
+        setFormulaError('Bad formula result - using default calculation (Basic Salary × 12 ÷ 52 ÷ 40)');
+        setForceUpdate(prev => prev + 1);
+          setForceUpdate(prev => prev + 1);
        }
         setFormulaError('');
        // Force update of the display
        setForceUpdate(prev => prev + 1);
       } else {
-        setFormulaError('Bad formula. Please enter a direct number or use valid operators: +, -, *, /, x, ÷');
+        // Invalid formula syntax - use default calculation
+        const defaultHourlyRate = (settings.basicSalary * 12) / 52 / 40;
+        console.log('🔄 Invalid formula syntax, using default formula:', defaultHourlyRate);
+        if (onUpdateHourlyRate) {
+          onUpdateHourlyRate(defaultHourlyRate);
+        }
+        setFormulaError('Invalid formula syntax - using default calculation');
+        setForceUpdate(prev => prev + 1);
       }
     } else {
-      // Not a number and not a formula
-      setFormulaError('Bad formula. Please enter a direct number or use valid operators: +, -, *, /, x, ÷');
+      // Not a number and not a formula - use default calculation
+      const defaultHourlyRate = (settings.basicSalary * 12) / 52 / 40;
+      console.log('🔄 Invalid input on blur, using default formula:', defaultHourlyRate);
+      if (onUpdateHourlyRate) {
+        onUpdateHourlyRate(defaultHourlyRate);
+      }
+      setFormulaError('Invalid input - using default calculation (Basic Salary × 12 ÷ 52 ÷ 40)');
+      setForceUpdate(prev => prev + 1);
     }
   };
 
@@ -604,6 +671,13 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     ? `Formula: Basic Salary ${hourlyRateFormula.replace(/x/g, ' × ').replace(/\//g, ' ÷ ')}`
                     : 'Manual Input'
                   }
+                </p>
+              )}
+              
+              {/* Default formula info */}
+              {!hourlyRateFormula && (
+                <p className="text-blue-500 text-sm text-center">
+                  Using default: Basic Salary × 12 ÷ 52 ÷ 40
                 </p>
               )}
             </div>
