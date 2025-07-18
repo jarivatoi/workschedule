@@ -464,17 +464,14 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   
   /**
    * TIME FORMATTER
-   * Converts 24-hour time format to 12-hour format with AM/PM
+   * Returns time in 24-hour format (HH:MM)
    * 
-   * @param time - Time string in HH:MM format
-   * @returns Formatted time string (e.g., "2:30 PM")
+   * @param time - Time string in HH:MM format (24-hour)
+   * @returns Time string in 24-hour format (e.g., "14:30")
    */
   const formatTime = (time: string) => {
-    const [hours, minutes] = time.split(':');
-    const hour = parseInt(hours, 10);
-    const ampm = hour >= 12 ? 'PM' : 'AM';
-    const displayHour = hour % 12 || 12;
-    return `${displayHour}:${minutes} ${ampm}`;
+    // Return time as-is in 24-hour format
+    return time;
   };
 
   /**
