@@ -7,6 +7,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:netlify": "VITE_DEPLOY_TARGET=netlify vite build --base=/",
+    "build:github": "VITE_DEPLOY_TARGET=github vite build --base=/workschedule/",
     "build:netlify": "vite build --base=/",
     "build:github": "vite build --base=/workschedule/",
     "lint": "eslint .",
@@ -19,7 +21,9 @@
     "android:build": "npm run build && npx cap copy android && npx cap sync android && cd android && ./gradlew assembleDebug",
     "android:release": "npm run build && npx cap copy android && npx cap sync android && cd android && ./gradlew assembleRelease",
     "deploy:netlify": "npm run build:netlify && netlify deploy --prod --dir=dist",
+    "deploy:netlify": "npm run build:netlify && netlify deploy --prod --dir=dist",
     "deploy:github": "npm run build:github && gh-pages -d dist",
+    "deploy:both": "npm run deploy:netlify && npm run deploy:github"
     "deploy:both": "npm run deploy:netlify && npm run deploy:github"
   },
   "dependencies": {
