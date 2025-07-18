@@ -328,7 +328,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     }
     
     // Check if it's a direct number input (no operators)
-    if (!/[+\-*/x÷]/.test(trimmedFormula)) {
+    else if (!/[+\-*/x÷]/.test(trimmedFormula)) {
       const directNumber = parseFloat(trimmedFormula);
       if (!isNaN(directNumber) && directNumber > 0) {
         // Valid direct number
@@ -344,16 +344,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
       } else {
         // Invalid direct number - use default calculation
         const defaultHourlyRate = (settings.basicSalary * 12) / 52 / 40;
-        console.log('🔄 Invalid direct number on blur, using default formula:', defaultHourlyRate);
-        if (onUpdateHourlyRate) {
-          onUpdateHourlyRate(defaultHourlyRate);
-        }
-        setFormulaError('Using default calculation (Basic Salary × 12 ÷ 52 ÷ 40)');
-        setForceUpdate(prev => prev + 1);
-        return;
-      } else {
-        // Invalid direct number - use default calculation
-        const defaultHourlyRate = (settings.basicSalary * 12) / 52 / 40;
         console.log('🔄 Invalid direct number, using default formula:', defaultHourlyRate);
         if (onUpdateHourlyRate) {
           onUpdateHourlyRate(defaultHourlyRate);
@@ -365,7 +355,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     }
     
     // Check if it's a valid formula (has operators)
-    if (/[+\-*/x÷]/.test(trimmedFormula)) {
+    else if (/[+\-*/x÷]/.test(trimmedFormula)) {
       if (!validateFormula(trimmedFormula)) {
         // Invalid formula - use default calculation
         const defaultHourlyRate = (settings.basicSalary * 12) / 52 / 40;
@@ -384,12 +374,13 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         console.log('📐 Formula calculated:', newHourlyRate);
         setHourlyRateValue(newHourlyRate);
        if (onUpdateHourlyRate) {
-          // Invalid formula result - use default calculation
-          const defaultHourlyRate = (settings.basicSalary * 12) / 52 / 40;
-          console.log('🔄 Invalid formula result, using default formula:', defaultHourlyRate);
-          if (onUpdateHourlyRate) {
-            onUpdateHourlyRate(defaultHourlyRate);
-          }
+          onUpdateHourlyRate(newHourlyRate);
+          setForceUpdate(prev => prev + 1);
+       }
+        setFormulaError('');
+       // Force update of the display
+       setForceUpdate(prev => prev + 1);
+      } else {
         // Invalid formula result - use default calculation
         const defaultHourlyRate = (settings.basicSalary * 12) / 52 / 40;
         console.log('🔄 Invalid formula result on blur, using default formula:', defaultHourlyRate);
@@ -397,20 +388,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           onUpdateHourlyRate(defaultHourlyRate);
         }
         setFormulaError('Bad formula result - using default calculation (Basic Salary × 12 ÷ 52 ÷ 40)');
-        setForceUpdate(prev => prev + 1);
-          setForceUpdate(prev => prev + 1);
-       }
-        setFormulaError('');
-       // Force update of the display
-       setForceUpdate(prev => prev + 1);
-      } else {
-        // Invalid formula syntax - use default calculation
-        const defaultHourlyRate = (settings.basicSalary * 12) / 52 / 40;
-        console.log('🔄 Invalid formula syntax, using default formula:', defaultHourlyRate);
-        if (onUpdateHourlyRate) {
-          onUpdateHourlyRate(defaultHourlyRate);
-        }
-        setFormulaError('Invalid formula syntax - using default calculation');
         setForceUpdate(prev => prev + 1);
       }
     } else {
