@@ -491,7 +491,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               {/* Formula preview */}
               {hourlyRateFormula && !formulaError && (
                 <p className="text-gray-500 text-sm text-center">
-                  Formula: Basic Salary {hourlyRateFormula.replace(/x/g, ' × ').replace(/\//g, ' ÷ ')}
+                  {/[+\-*/x÷]/.test(hourlyRateFormula) 
+                    ? `Formula: Basic Salary ${hourlyRateFormula.replace(/x/g, ' × ').replace(/\//g, ' ÷ ')}`
+                    : 'Manual Input'
+                  }
                 </p>
               )}
             </div>
