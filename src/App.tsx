@@ -663,6 +663,7 @@ function App() {
    * IMPORT DATA HANDLER
    * Imports data from JSON file and refreshes all application state
    * Includes multiple refresh attempts to ensure data consistency
+   * Automatically redirects to Calendar tab after successful import
    */
   const handleImportData = async (data: any) => {
     try {
@@ -695,6 +696,10 @@ function App() {
       triggerRefresh(300, 'Second delayed');
       triggerRefresh(600, 'Third delayed');
       triggerRefresh(1000, 'Final delayed');
+      
+      // Automatically redirect to Calendar tab after successful import
+      console.log('📅 Redirecting to Calendar tab after import');
+      setActiveTab('calendar');
       
       // User feedback based on data version
       const version = data.version || '1.0';

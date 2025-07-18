@@ -42,6 +42,9 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
 
   const [error, setError] = useState<string | null>(null);
 
+  // Select All functionality state
+  const [selectAllDays, setSelectAllDays] = useState(false);
+
   // Calculate total hours between start and end time
   const calculateTimeDifference = (fromTime: string, toTime: string): number => {
     if (!fromTime || !toTime) return 0;
@@ -125,6 +128,19 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
       }
     }
   }, [isOpen, editingShift]);
+
+  // Effect to update Select All state based on individual day selections
+  useEffect(() => {
+    const dayKeys = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    const selectedDays = dayKeys.filter(day => formData.applicableDays[day as keyof typeof formData.applicableDays]);
+    
+    // Update Select All state based on individual selections
+    if (selectedDays.length === dayKeys.length) {
+      setSelectAllDays(true);
+    } else {
+      setSelectAllDays(false);
+    }
+  }, [formData.applicableDays]);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -294,6 +310,39 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
     if (e.target === e.currentTarget) {
       onClose();
     }
+  };
+
+  // Handle Select All checkbox change
+  const handleSelectAllDays = (checked: boolean) => {
+    setSelectAllDays(checked);
+    
+    // Update all day checkboxes
+    setFormData(prev => ({
+      ...prev,
+      applicableDays: {
+        ...prev.applicableDays,
+        monday: checked,
+        tuesday: checked,
+        wednesday: checked,
+        thursday: checked,
+        friday: checked,
+        saturday: checked,
+        sunday: checked,
+        // Keep specialDay unchanged as it's separate
+        specialDay: prev.applicableDays.specialDay
+      }
+    }));
+  };
+
+  // Handle individual day checkbox change
+  const handleDayChange = (dayKey: string, checked: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      applicableDays: {
+        ...prev.applicableDays,
+        [dayKey]: checked
+      }
+    }));
   };
 
   const modalContent = (
@@ -526,6 +575,24 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
 
             <div>
               <label className="block text-base font-medium text-gray-700 mb-3 text-center">Applicable Days</label>
+              
+              {/* Select All Checkbox */}
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <label className="flex items-center justify-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectAllDays}
+                    onChange={(e) => handleSelectAllDays(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 focus:ring-blue-500 focus:ring-2 rounded"
+                  />
+                  <span className="text-sm font-semibold text-blue-800">Select All Days</span>
+                </label>
+                <p className="text-xs text-blue-600 text-center mt-1">
+                  Check to select all weekdays at once
+                </p>
+              </div>
+              
+              {/* Individual Day Checkboxes */}
               <div className="grid grid-cols-2 gap-2">
                 {[
                   { key: 'monday', label: 'Monday' },
@@ -540,15 +607,7 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
                     <input
                       type="checkbox"
                       checked={formData.applicableDays[day.key as keyof typeof formData.applicableDays]}
-                      onChange={(e) => {
-                        setFormData(prev => ({
-                          ...prev,
-                          applicableDays: {
-                            ...prev.applicableDays,
-                            [day.key]: e.target.checked
-                          }
-                        }));
-                      }}
+                      onChange={(e) => handleDayChange(day.key, e.target.checked)}
                       className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 focus:ring-2 rounded"
                     />
                     <span className="text-sm text-gray-700">{day.label}</span>
@@ -558,11 +617,13 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
               <p className="text-xs text-gray-500 mt-2">
                 Select which days this shift can be scheduled on
               </p>
+              
+              {/* Validation Message */}
               {!Object.entries(formData.applicableDays)
                 .filter(([key]) => key !== 'specialDay')
                 .some(([, value]) => value === true) && (
                 <p className="text-xs text-red-500 mt-1">
-                  * At least one day must be selected
+                  * Please select at least one day (use "Select All" for convenience)
                 </p>
               )}
             </div>
