@@ -214,9 +214,19 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
    * Manages the formula input field and clears any previous errors
    */
   const handleHourlyRateFormulaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const formula = e.target.value;
+    const input = e.target.value;
+    
+    // Only allow numbers, operators (+, -, *, /, x, ÷), decimal points, and spaces
+    const sanitizedFormula = input.replace(/[^0-9+\-*/x÷.\s]/g, '');
+    
+    setHourlyRateFormula(sanitizedFormula);
     setHourlyRateFormula(formula);
     setFormulaError('');
+    
+    // Update the input value if it was sanitized
+    if (input !== sanitizedFormula) {
+      e.target.value = sanitizedFormula;
+    }
   };
 
   /**
@@ -226,18 +236,42 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
    */
   const handleHourlyRateFormulaKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      // Validate formula syntax
-      if (hourlyRateFormula && !validateFormula(hourlyRateFormula)) {
-        setFormulaError('Invalid formula syntax. Use operators: +, -, *, /, x, ÷');
-        return;
-      }
-      
-      // Calculate and apply new hourly rate
-      if (hourlyRateFormula) {
-        const newHourlyRate = parseHourlyRateFormula(hourlyRateFormula, settings.basicSalary);
-        setHourlyRateValue(newHourlyRate);
-        onUpdateHourlyRate?.(newHourlyRate);
-      }
+      processFormula();
+    }
+  };
+
+  /**
+   * FORMULA BLUR HANDLER
+   * Processes formula when user clicks outside the formula input
+   * Automatically calculates and applies the result
+   */
+  const handleHourlyRateFormulaBlur = () => {
+    if (hourlyRateFormula.trim()) {
+      processFormula();
+    }
+  };
+
+  /**
+   * PROCESS FORMULA FUNCTION
+   * Validates and processes the formula, updating the hourly rate
+   */
+  const processFormula = () => {
+    if (!hourlyRateFormula.trim()) return;
+    
+    // Validate formula syntax
+    if (!validateFormula(hourlyRateFormula)) {
+      setFormulaError('Invalid formula syntax. Use operators: +, -, *, /, x, ÷');
+      return;
+    }
+    
+    // Calculate and apply new hourly rate
+    const newHourlyRate = parseHourlyRateFormula(hourlyRateFormula, settings.basicSalary);
+    if (newHourlyRate > 0) {
+      setHourlyRateValue(newHourlyRate);
+      onUpdateHourlyRate?.(newHourlyRate);
+      setFormulaError('');
+    } else {
+      setFormulaError('Formula resulted in invalid value');
     }
   };
 
@@ -419,6 +453,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               defaultValue={settings.basicSalary.toLocaleString('en-US')}
               onChange={handleBasicSalaryChange}
               onFocus={handleBasicSalaryFocus}
+              onBlur={handleHourlyRateFormulaBlur}
               onBlur={handleBasicSalaryBlur}
               placeholder="0"
               className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center text-lg"
