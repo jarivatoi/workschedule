@@ -464,7 +464,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               defaultValue={settings.basicSalary.toLocaleString('en-US')}
               onChange={handleBasicSalaryChange}
               onFocus={handleBasicSalaryFocus}
-              onBlur={handleHourlyRateFormulaBlur}
               onBlur={handleBasicSalaryBlur}
               placeholder="0"
               className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center text-lg"
