@@ -1,4 +1,4 @@
-const CACHE_NAME = 'xray-anwh-v7';
+const CACHE_NAME = 'workschedule-v7';
 const urlsToCache = [
   '/workschedule/',
   '/workschedule/index.html',
