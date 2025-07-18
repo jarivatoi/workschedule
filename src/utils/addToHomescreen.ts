@@ -43,7 +43,7 @@ export class AddToHomescreen {
   constructor(options: AddToHomescreenOptions = {}) {
     this.options = {
       appName: 'Work Schedule',
-      appIconUrl: 'https://jarivatoi.github.io/workschedule/Icon.PNG',
+      appIconUrl: '/workschedule/Icon.PNG',
       maxModalDisplayCount: 3,
       skipFirstVisit: false,
       startDelay: 2000,
