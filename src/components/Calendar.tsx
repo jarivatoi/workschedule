@@ -267,7 +267,7 @@ export const Calendar: React.FC<CalendarProps> = ({
       return {
         id: customShift.id,
         label: customShift.label,
-        time: `${customShift.fromTime}-${customShift.toTime}`,
+        time: customShift.label,
         color: 'bg-purple-100 text-purple-800 border-purple-200',
         displayColor: 'text-purple-600'
       };
@@ -973,7 +973,7 @@ export const Calendar: React.FC<CalendarProps> = ({
                               WebkitUserSelect: 'none'
                             }}
                           >
-                            <div className="text-center select-none truncate px-0.5">{shift.time}</div>
+                            <div className="text-center select-none truncate px-0.5">{shift.label}</div>
                           </div>
                         ) : null;
                       })}
