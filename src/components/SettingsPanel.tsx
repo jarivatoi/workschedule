@@ -258,6 +258,17 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     if (!hourlyRateFormula.trim()) return;
     
     // Validate formula syntax
+    // Check if it's a direct number input
+    const directNumber = parseFloat(hourlyRateFormula);
+    if (!isNaN(directNumber) && hourlyRateFormula.trim() === directNumber.toString()) {
+      // Direct number input
+      setHourlyRateValue(directNumber);
+      onUpdateHourlyRate?.(directNumber);
+      setFormulaError('');
+      return;
+    }
+    
+    // Check if it's a formula
     if (!validateFormula(hourlyRateFormula)) {
       setFormulaError('Invalid formula syntax. Use operators: +, -, *, /, x, ÷');
       return;
@@ -269,12 +280,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
       setHourlyRateValue(newHourlyRate);
       onUpdateHourlyRate?.(newHourlyRate);
       setFormulaError('');
-      
-      // Force update the hourly rate input field display
-      const hourlyRateInput = document.querySelector('input[type="number"][step="5"]') as HTMLInputElement;
-      if (hourlyRateInput) {
-        hourlyRateInput.value = newHourlyRate.toFixed(2);
-      }
     } else {
       setFormulaError('Formula resulted in invalid value');
     }
@@ -284,56 +289,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   // HOURLY RATE DIRECT INPUT HANDLERS SECTION
   // ============================================================================
   
-  /**
-   * HOURLY RATE CHANGE HANDLER
-   * Handles direct input to the hourly rate field
-   * Includes sophisticated input validation for decimal numbers
-   * 
-   * VALIDATION RULES:
-   * - Allows empty string for clearing
-   * - Allows single "0"
-   * - Allows "0." followed by up to 2 digits (e.g., "0.50")
-   * - Allows numbers starting with 1-9, optional decimal with up to 2 places
-   * - Prevents leading zeros (except for decimal cases)
-   */
-  const handleHourlyRateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    
-    // Comprehensive validation regex for decimal input
-    if (value === '' || 
-        (value === '0') || 
-        (value.startsWith('0.') && /^0\.\d{0,2}$/.test(value)) ||
-        (/^[1-9]\d*\.?\d{0,2}$/.test(value))) {
-      
-      const numericValue = value === '' ? 0 : parseFloat(value) || 0;
-      setHourlyRateValue(numericValue);
-      onUpdateHourlyRate?.(numericValue);
-      
-      // Clear formula when direct input is used
-      setHourlyRateFormula('');
-    }
-  };
-
-  /**
-   * HOURLY RATE FOCUS HANDLER
-   * Shows raw numeric value for editing when field gains focus
-   */
-  const handleHourlyRateFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.target.value = hourlyRateValue.toString();
-  };
-
-  /**
-   * HOURLY RATE BLUR HANDLER
-   * Formats to 2 decimal places when field loses focus
-   * Ensures consistent display format
-   */
-  const handleHourlyRateBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    const numericValue = parseFloat(e.target.value) || 0;
-    setHourlyRateValue(numericValue);
-    onUpdateHourlyRate?.(numericValue);
-    e.target.value = numericValue.toFixed(2);
-  };
-
   // ============================================================================
   // OVERTIME SETTINGS HANDLERS SECTION
   // ============================================================================
@@ -503,15 +458,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 <span className="text-gray-500 font-medium">{settings.currency}</span>
               </div>
               <input
-                type="number"
-                defaultValue={hourlyRateValue}
-                onChange={handleHourlyRateChange}
-                onFocus={handleHourlyRateFocus}
-                onBlur={handleHourlyRateBlur}
-                step="5.00"
-                min="0"
-                placeholder="0.00"
-                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center"
+                type="text"
+                value={hourlyRateValue.toFixed(2)}
+                readOnly
+                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg bg-gray-100 text-center cursor-not-allowed"
               />
             </div>
             
