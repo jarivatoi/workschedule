@@ -280,6 +280,11 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
       setHourlyRateValue(newHourlyRate);
       onUpdateHourlyRate?.(newHourlyRate);
       setFormulaError('');
+      
+      // Force re-render by triggering a state update
+      setTimeout(() => {
+        setHourlyRateValue(newHourlyRate);
+      }, 0);
     } else {
       setFormulaError('Formula resulted in invalid value');
     }
