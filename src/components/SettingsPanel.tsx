@@ -269,6 +269,12 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
       setHourlyRateValue(newHourlyRate);
       onUpdateHourlyRate?.(newHourlyRate);
       setFormulaError('');
+      
+      // Force update the hourly rate input field display
+      const hourlyRateInput = document.querySelector('input[type="number"][step="5"]') as HTMLInputElement;
+      if (hourlyRateInput) {
+        hourlyRateInput.value = newHourlyRate.toFixed(2);
+      }
     } else {
       setFormulaError('Formula resulted in invalid value');
     }
