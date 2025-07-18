@@ -461,7 +461,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 type="text"
                 value={hourlyRateValue.toFixed(2)}
                 readOnly
-                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg bg-gray-100 text-center cursor-not-allowed"
+                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg bg-gray-100 text-center cursor-not-allowed pointer-events-none"
+                tabIndex={-1}
               />
             </div>
             
