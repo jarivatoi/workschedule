@@ -49,7 +49,6 @@ import { useScheduleCalculations } from './hooks/useScheduleCalculations';
 import { useIndexedDB, useScheduleData } from './hooks/useIndexedDB';
 import { workScheduleDB } from './utils/indexedDB';
 import { AddToHomescreen } from './utils/addToHomescreen';
-import { hybridBackup } from './utils/hybridBackup';
 import { DEFAULT_SHIFT_COMBINATIONS } from './constants';
 import { DaySchedule, SpecialDates, Settings, ExportData } from './types';
 import { gsap } from 'gsap';
@@ -210,11 +209,6 @@ function App() {
   useEffect(() => {
     if (!isLoading) {
       console.log('🏠 Initializing Add to Homescreen...');
-      
-      // Initialize hybrid backup system
-      hybridBackup.initialize().catch(error => {
-        console.error('❌ Error initializing hybrid backup:', error);
-      });
       
       // Delay to ensure everything is settled
       setTimeout(() => {

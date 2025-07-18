@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Download, Upload, Database as DataIcon, FileText, Database, HardDrive, Smartphone, Shield, Clock, RefreshCw } from 'lucide-react';
 import { workScheduleDB } from '../utils/indexedDB';
-import { hybridBackup } from '../utils/hybridBackup';
 
 interface MenuPanelProps {
   onImportData: (data: any) => void;
@@ -13,16 +12,12 @@ export const MenuPanel: React.FC<MenuPanelProps> = ({
   onExportData
 }) => {
   const [storageInfo, setStorageInfo] = useState<{ used: number; available: number } | null>(null);
-  const [backupStatus, setBackupStatus] = useState<any>(null);
 
   useEffect(() => {
     const loadStorageInfo = async () => {
       try {
         const info = await workScheduleDB.getStorageInfo();
         setStorageInfo(info);
-        
-        const status = hybridBackup.getBackupStatus();
-        setBackupStatus(status);
       } catch (error) {
         console.error('Failed to get storage info:', error);
       }
@@ -81,20 +76,6 @@ export const MenuPanel: React.FC<MenuPanelProps> = ({
     }
   };
 
-  const handleCreateBackupNow = async () => {
-    try {
-      await hybridBackup.createBackupNow();
-      
-      // Refresh backup status
-      const status = hybridBackup.getBackupStatus();
-      setBackupStatus(status);
-      
-      alert('✅ Monthly backup created successfully!');
-    } catch (error) {
-      console.error('Backup creation failed:', error);
-      alert('❌ Failed to create backup. Please try again.');
-    }
-  };
 
   const formatBytes = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
@@ -200,68 +181,6 @@ export const MenuPanel: React.FC<MenuPanelProps> = ({
           </div>
         </div>
 
-        {/* Hybrid Backup System */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-          <div className="flex items-center justify-center space-x-2 mb-4">
-            <Shield className="w-5 h-5 text-blue-600" />
-            <h3 className="text-lg font-semibold text-blue-800 text-center">Hybrid Backup System</h3>
-          </div>
-          
-          <div className="space-y-4">
-            <div className="text-center">
-              <div className="flex items-center justify-center space-x-2 mb-2">
-                <Clock className="w-4 h-4 text-blue-600" />
-                <span className="text-sm font-medium text-blue-700">Auto-Backup Status</span>
-              </div>
-              <p className="text-xs text-blue-600 mb-3">
-                Automatically saves one backup file per month to your downloads
-              </p>
-            </div>
-
-            {backupStatus && (
-              <div className="space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span className="text-blue-700">Monthly Backups:</span>
-                  <span className="font-mono text-blue-800">{backupStatus.backupCount} files</span>
-                </div>
-                
-                {backupStatus.lastBackup && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-blue-700">Last Backup:</span>
-                    <span className="font-mono text-blue-800">
-                      {new Date(backupStatus.lastBackup.timestamp).toLocaleDateString()}
-                    </span>
-                  </div>
-                )}
-                
-                <div className="flex justify-between text-sm">
-                  <span className="text-blue-700">Status:</span>
-                  <span className={`font-mono ${backupStatus.nextBackupDue ? 'text-orange-600' : 'text-green-600'}`}>
-                    {backupStatus.nextBackupDue ? 'Backup Due' : 'Up to Date'}
-                  </span>
-                </div>
-              </div>
-            )}
-
-            <div className="border-t border-blue-200 pt-3">
-              <button
-                onClick={handleCreateBackupNow}
-                className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200 font-medium"
-              >
-                <RefreshCw className="w-4 h-4" />
-                <span>Create Backup Now</span>
-              </button>
-            </div>
-            
-            <div className="border-t border-blue-200 pt-3">
-              <div className="text-center text-xs text-blue-700 space-y-1">
-                <p><strong>✅ Smart Recovery:</strong> Detects when cache is cleared</p>
-                <p><strong>✅ Monthly Files:</strong> One backup per month automatically</p>
-                <p><strong>✅ Auto-Restore:</strong> Offers recovery on fresh start</p>
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* Data Management Section */}
         <div className="bg-gray-50 rounded-lg p-6">
