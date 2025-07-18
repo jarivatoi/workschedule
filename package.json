@@ -7,10 +7,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:netlify": "VITE_DEPLOY_TARGET=netlify vite build --base=/",
-    "build:github": "VITE_DEPLOY_TARGET=github vite build --base=/workschedule/",
-    "build:netlify": "vite build --base=/",
-    "build:github": "vite build --base=/workschedule/",
+    "build:netlify": "vite build --mode=netlify",
+    "build:github": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "cap:build": "npm run build && npx cap copy && npx cap sync",
