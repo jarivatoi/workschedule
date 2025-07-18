@@ -312,44 +312,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     }
     
     // Check if it's a formula
-    if (!validateFormula(trimmedFormula)) {
-      setFormulaError('Invalid formula syntax. Use operators: +, -, *, /, x, ÷');
-      return;
-    }
-    
-    // Calculate and apply new hourly rate
-    const newHourlyRate = parseHourlyRateFormula(hourlyRateFormula, settings.basicSalary);
-    if (newHourlyRate > 0) {
-      setHourlyRateValue(newHourlyRate);
-      if (onUpdateHourlyRate) {
-        onUpdateHourlyRate(newHourlyRate);
-      }
-      setFormulaError('');
-    } else {
-      setFormulaError('Formula resulted in invalid value');
-    }
-  };
-
-  /**
-   * PROCESS FORMULA FUNCTION
-   * Validates and processes the formula, updating the hourly rate
-   */
-  const processFormula = () => {
-    if (!hourlyRateFormula.trim()) return;
-    
-    // Check if it's a direct number input
-    const directNumber = parseFloat(hourlyRateFormula);
-    if (!isNaN(directNumber) && hourlyRateFormula.trim() === directNumber.toString()) {
-      // Direct number input
-      setHourlyRateValue(directNumber);
-      if (onUpdateHourlyRate) {
-        onUpdateHourlyRate(directNumber);
-      }
-      setFormulaError('');
-      return;
-    }
-    
-    // Check if it's a formula
     if (!validateFormula(hourlyRateFormula)) {
       setFormulaError('Invalid formula syntax. Use operators: +, -, *, /, x, ÷');
       return;
