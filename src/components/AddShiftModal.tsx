@@ -29,13 +29,13 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
     normalHours: 0,
     overtimeHours: 0,
     applicableDays: {
-      monday: true,
-      tuesday: true,
-      wednesday: true,
-      thursday: true,
-      friday: true,
-      saturday: true,
-      sunday: true,
+      monday: false,
+      tuesday: false,
+      wednesday: false,
+      thursday: false,
+      friday: false,
+      saturday: false,
+      sunday: false,
       specialDay: true
     }
   });
@@ -84,13 +84,13 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
           normalHours: editingShift.normalHours || 0,
           overtimeHours: editingShift.overtimeHours || 0,
           applicableDays: editingShift.applicableDays || {
-            monday: true,
-            tuesday: true,
-            wednesday: true,
-            thursday: true,
-            friday: true,
-            saturday: true,
-            sunday: true,
+            monday: false,
+            tuesday: false,
+            wednesday: false,
+            thursday: false,
+            friday: false,
+            saturday: false,
+            sunday: false,
             specialDay: true
           }
         });
@@ -102,13 +102,13 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
           normalHours: 0,
           overtimeHours: 0,
           applicableDays: {
-            monday: true,
-            tuesday: true,
-            wednesday: true,
-            thursday: true,
-            friday: true,
-            saturday: true,
-            sunday: true,
+            monday: false,
+            tuesday: false,
+            wednesday: false,
+            thursday: false,
+            friday: false,
+            saturday: false,
+            sunday: false,
             specialDay: true
           }
         });
@@ -514,8 +514,7 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
                   { key: 'thursday', label: 'Thursday' },
                   { key: 'friday', label: 'Friday' },
                   { key: 'saturday', label: 'Saturday' },
-                  { key: 'sunday', label: 'Sunday' },
-                  { key: 'specialDay', label: 'Special Day' }
+                  { key: 'sunday', label: 'Sunday' }
                 ].map(day => (
                   <label key={day.key} className="flex items-center space-x-2 cursor-pointer">
                     <input
