@@ -245,8 +245,37 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
    * Automatically calculates and applies the result
    */
   const handleHourlyRateFormulaBlur = () => {
-    if (hourlyRateFormula.trim()) {
-      processFormula();
+    const trimmedFormula = hourlyRateFormula.trim();
+    
+    if (!trimmedFormula) {
+      setFormulaError('');
+      return;
+    }
+    
+    // Check if it's a direct number input
+    const directNumber = parseFloat(trimmedFormula);
+    if (!isNaN(directNumber) && trimmedFormula === directNumber.toString()) {
+      // Valid direct number
+      setHourlyRateValue(directNumber);
+      onUpdateHourlyRate?.(directNumber);
+      setFormulaError('');
+      return;
+    }
+    
+    // Check if it's a valid formula
+    if (!validateFormula(trimmedFormula)) {
+      setFormulaError('Bad formula. Please enter a direct number or use valid operators: +, -, *, /, x, ÷');
+      return;
+    }
+    
+    // Calculate and apply formula result
+    const newHourlyRate = parseHourlyRateFormula(trimmedFormula, settings.basicSalary);
+    if (newHourlyRate > 0) {
+      setHourlyRateValue(newHourlyRate);
+      onUpdateHourlyRate?.(newHourlyRate);
+      setFormulaError('');
+    } else {
+      setFormulaError('Bad formula. Please enter a direct number or use valid operators: +, -, *, /, x, ÷');
     }
   };
 
