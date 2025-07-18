@@ -60,6 +60,16 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
     return (toMinutes - fromMinutes) / 60;
   };
 
+  // Format hours to display as "X Hrs Y Mins"
+  const formatHoursDisplay = (totalHours: number): string => {
+    const hours = Math.floor(totalHours);
+    const minutes = Math.round((totalHours - hours) * 60);
+    
+    if (hours === 0 && minutes === 0) return '0 Mins';
+    if (hours === 0) return `${minutes} Mins`;
+    if (minutes === 0) return `${hours} Hrs`;
+    return `${hours} Hrs ${minutes} Mins`;
+  };
   // Validate that total hours don't exceed time difference
   const validateHours = (normalHours: number, overtimeHours: number, fromTime: string, toTime: string): string | null => {
     const totalHours = normalHours + overtimeHours;
@@ -545,18 +555,20 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
               <p className="text-xs text-gray-500 mt-2">
                 Select which days this shift can be scheduled on
               </p>
-              <p className="text-xs text-red-500 mt-1">
-                * At least one day must be selected
-              </p>
+              {!Object.values(formData.applicableDays).some(day => day === true) && (
+                <p className="text-xs text-red-500 mt-1">
+                  * At least one day must be selected
+                </p>
+              )}
             </div>
             
             {/* Time difference info */}
             {formData.fromTime && formData.toTime && (
               <div className="mt-2 p-2 bg-blue-50 rounded text-sm text-blue-700 text-center">
-                Time difference: {calculateTimeDifference(formData.fromTime, formData.toTime).toFixed(1)} hours
+                Time difference: {formatHoursDisplay(calculateTimeDifference(formData.fromTime, formData.toTime))}
                 {formData.normalHours + formData.overtimeHours > 0 && (
                   <span className="ml-2">
-                    | Total entered: {(formData.normalHours + formData.overtimeHours).toFixed(1)} hours
+                    | Total entered: {formatHoursDisplay(formData.normalHours + formData.overtimeHours)}
                   </span>
                 )}
               </div>
