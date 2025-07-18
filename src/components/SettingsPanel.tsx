@@ -244,6 +244,50 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     if (input !== sanitizedFormula) {
       e.target.value = sanitizedFormula;
     }
+    
+    // Auto-calculate as user types
+    const trimmedFormula = sanitizedFormula.trim();
+    
+    if (!trimmedFormula) {
+      // Clear formula, don't update hourly rate
+      setFormulaError('');
+      return;
+    }
+    
+    // Check if it's a direct number input (no operators)
+    if (!/[+\-*/x÷]/.test(trimmedFormula)) {
+      const directNumber = parseFloat(trimmedFormula);
+      if (!isNaN(directNumber) && directNumber > 0) {
+        // Valid direct number - update immediately
+        console.log('🔢 Auto-updating with direct number:', directNumber);
+        if (onUpdateHourlyRate) {
+          onUpdateHourlyRate(directNumber);
+        }
+        setFormulaError('');
+        setForceUpdate(prev => prev + 1);
+        return;
+      }
+    }
+    
+    // Check if it's a valid formula (has operators)
+    if (/[+\-*/x÷]/.test(trimmedFormula)) {
+      if (validateFormula(trimmedFormula)) {
+        // Calculate and apply formula result immediately
+        const newHourlyRate = parseHourlyRateFormula(trimmedFormula, settings.basicSalary);
+        if (newHourlyRate > 0) {
+          console.log('📐 Auto-updating with formula result:', newHourlyRate);
+          if (onUpdateHourlyRate) {
+            onUpdateHourlyRate(newHourlyRate);
+          }
+          setFormulaError('');
+          setForceUpdate(prev => prev + 1);
+        } else {
+          setFormulaError('Invalid formula result');
+        }
+      } else {
+        setFormulaError('Invalid formula syntax');
+      }
+    }
   };
 
   /**
