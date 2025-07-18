@@ -516,7 +516,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               </div>
               <input
                 type="text"
-                value={(hourlyRateValue || settings.hourlyRate || 0).toFixed(2)}
+                value={(settings.hourlyRate || 0).toFixed(2)}
                 key={forceUpdate} // Force re-render when forceUpdate changes
                 readOnly
                 className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg bg-gray-100 text-center cursor-not-allowed pointer-events-none"
