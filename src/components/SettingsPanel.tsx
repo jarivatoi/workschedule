@@ -110,6 +110,13 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
   // Force update of hourly rate display
   const [forceUpdate, setForceUpdate] = useState(0);
+  
+  // Initialize hourly rate value on component mount
+  useEffect(() => {
+    if (settings.hourlyRate && hourlyRateValue === 0) {
+      setHourlyRateValue(settings.hourlyRate);
+    }
+  }, [settings.hourlyRate, hourlyRateValue]);
   // ============================================================================
   // FORMULA CALCULATION SECTION
   // ============================================================================
@@ -509,7 +516,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               </div>
               <input
                 type="text"
-                value={(hourlyRateValue || 0).toFixed(2)}
+                value={(hourlyRateValue || settings.hourlyRate || 0).toFixed(2)}
                 key={forceUpdate} // Force re-render when forceUpdate changes
                 readOnly
                 className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg bg-gray-100 text-center cursor-not-allowed pointer-events-none"
