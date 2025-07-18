@@ -237,16 +237,6 @@ export const MonthClearModal: React.FC<MonthClearModalProps> = ({
             )}
           </div>
 
-          {/* Long-press info */}
-          <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex items-center space-x-2">
-              <Clock className="w-4 h-4 text-blue-600" />
-              <span className="text-sm text-blue-800">
-                Triggered by long-press (500ms) on month header
-              </span>
-            </div>
-          </div>
-
           {/* Add extra padding at bottom to ensure all content is accessible */}
           <div className="h-20" />
         </div>
