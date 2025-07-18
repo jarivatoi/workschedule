@@ -76,7 +76,7 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
     const timeDifference = calculateTimeDifference(fromTime, toTime);
     
     if (totalHours > timeDifference) {
-      return `Total hours (${totalHours}) cannot exceed time difference (${timeDifference.toFixed(1)} hours)`;
+      return `Total hours (${formatHoursDisplay(totalHours)}) cannot exceed time difference (${formatHoursDisplay(timeDifference)})`;
     }
     
     return null;
