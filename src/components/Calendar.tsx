@@ -258,13 +258,7 @@ export const Calendar: React.FC<CalendarProps> = ({
     // First check if it's a predefined shift
     const predefinedShift = SHIFTS.find(shift => shift.id === shiftId);
     if (predefinedShift) {
-      return {
-        id: predefinedShift.id,
-        label: predefinedShift.label,
-        time: predefinedShift.time,
-        color: predefinedShift.color,
-        displayColor: predefinedShift.displayColor
-      };
+      return predefinedShift;
     }
     
     // Then check if it's a custom shift
@@ -272,8 +266,8 @@ export const Calendar: React.FC<CalendarProps> = ({
     if (customShift) {
       return {
         id: customShift.id,
-        label: customShift.label, // Use the actual shift label, not day names
-        time: customShift.label, // Display the shift label
+        label: customShift.label,
+        time: customShift.label,
         color: 'bg-purple-100 text-purple-800 border-purple-200',
         displayColor: 'text-purple-600'
       };
