@@ -252,10 +252,57 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
       return;
     }
     
+    // Check if it's a direct number input (no operators)
+    if (!/[+\-*/x÷]/.test(trimmedFormula)) {
+      const directNumber = parseFloat(trimmedFormula);
+      if (!isNaN(directNumber) && directNumber > 0) {
+        // Valid direct number
+        console.log('🔢 Direct number detected:', directNumber);
+        setHourlyRateValue(directNumber);
+        if (onUpdateHourlyRate) {
+          onUpdateHourlyRate(directNumber);
+        }
+        setFormulaError('');
+        return;
+      }
+    }
+    
+    // Check if it's a valid formula (has operators)
+    if (/[+\-*/x÷]/.test(trimmedFormula)) {
+      if (!validateFormula(trimmedFormula)) {
+        setFormulaError('Bad formula. Please enter a direct number or use valid operators: +, -, *, /, x, ÷');
+        return;
+      }
+      
+      // Calculate and apply formula result
+      const newHourlyRate = parseHourlyRateFormula(trimmedFormula, settings.basicSalary);
+      if (newHourlyRate > 0) {
+        console.log('📐 Formula calculated:', newHourlyRate);
+        setHourlyRateValue(newHourlyRate);
+        if (onUpdateHourlyRate) {
+          onUpdateHourlyRate(newHourlyRate);
+        }
+        setFormulaError('');
+      } else {
+        setFormulaError('Bad formula. Please enter a direct number or use valid operators: +, -, *, /, x, ÷');
+      }
+    } else {
+      // Not a number and not a formula
+      setFormulaError('Bad formula. Please enter a direct number or use valid operators: +, -, *, /, x, ÷');
+    }
+  };
+
+  /**
+   * PROCESS FORMULA FUNCTION
+   * Validates and processes the formula, updating the hourly rate
+   */
+  const processFormula = () => {
+    if (!hourlyRateFormula.trim()) return;
+    
     // Check if it's a direct number input
-    const directNumber = parseFloat(trimmedFormula);
-    if (!isNaN(directNumber) && trimmedFormula === directNumber.toString()) {
-      // Valid direct number
+    const directNumber = parseFloat(hourlyRateFormula);
+    if (!isNaN(directNumber) && hourlyRateFormula.trim() === directNumber.toString()) {
+      // Direct number input
       setHourlyRateValue(directNumber);
       if (onUpdateHourlyRate) {
         onUpdateHourlyRate(directNumber);
@@ -264,14 +311,14 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
       return;
     }
     
-    // Check if it's a valid formula
+    // Check if it's a formula
     if (!validateFormula(trimmedFormula)) {
-      setFormulaError('Bad formula. Please enter a direct number or use valid operators: +, -, *, /, x, ÷');
+      setFormulaError('Invalid formula syntax. Use operators: +, -, *, /, x, ÷');
       return;
     }
     
-    // Calculate and apply formula result
-    const newHourlyRate = parseHourlyRateFormula(trimmedFormula, settings.basicSalary);
+    // Calculate and apply new hourly rate
+    const newHourlyRate = parseHourlyRateFormula(hourlyRateFormula, settings.basicSalary);
     if (newHourlyRate > 0) {
       setHourlyRateValue(newHourlyRate);
       if (onUpdateHourlyRate) {
@@ -279,7 +326,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
       }
       setFormulaError('');
     } else {
-      setFormulaError('Bad formula. Please enter a direct number or use valid operators: +, -, *, /, x, ÷');
+      setFormulaError('Formula resulted in invalid value');
     }
   };
 
