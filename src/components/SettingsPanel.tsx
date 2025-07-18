@@ -220,7 +220,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     const sanitizedFormula = input.replace(/[^0-9+\-*/x÷.\s]/g, '');
     
     setHourlyRateFormula(sanitizedFormula);
-    setHourlyRateFormula(formula);
     setFormulaError('');
     
     // Update the input value if it was sanitized
