@@ -2,13 +2,13 @@
   "name": "Work Schedule",
   "short_name": "Work Schedule",
   "description": "Professional work schedule management system by NARAYYA",
-  "start_url": "https://jarivatoi.github.io/workschedule/",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",
   "orientation": "portrait",
   "prefer_related_applications": false,
-  "scope": "https://jarivatoi.github.io/workschedule/",
+  "scope": "/",
   "id": "xray-anwh-pwa",
   "icons": [
     {
@@ -37,6 +37,6 @@
     "client_mode": "navigate-existing"
   },
   "shortcuts": [
-    { "name": "Open Calendar", "url": "/workschedule/", "icons": [{ "src": "/workschedule/icon.svg", "sizes": "any" }] }
+    { "name": "Open Calendar", "url": "/", "icons": [{ "src": "/icon.svg", "sizes": "any" }] }
   ]
 }
