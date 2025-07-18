@@ -242,7 +242,10 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
     }
     
     // Validate at least one day is selected
-    const hasSelectedDay = Object.values(formData.applicableDays).some(day => day === true);
+    const hasSelectedDay = Object.entries(formData.applicableDays)
+      .filter(([key]) => key !== 'specialDay') // Exclude specialDay from validation
+      .some(([, value]) => value === true);
+    
     if (!hasSelectedDay) {
       setError('Validation Error: Please select at least one day for this shift');
       return;
@@ -555,7 +558,9 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
               <p className="text-xs text-gray-500 mt-2">
                 Select which days this shift can be scheduled on
               </p>
-              {!Object.values(formData.applicableDays).some(day => day === true) && (
+              {!Object.entries(formData.applicableDays)
+                .filter(([key]) => key !== 'specialDay')
+                .some(([, value]) => value === true) && (
                 <p className="text-xs text-red-500 mt-1">
                   * At least one day must be selected
                 </p>
