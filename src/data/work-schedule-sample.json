@@ -1,0 +1,70 @@
+{
+  "schedule": {
+    "2025-07-04": [
+      "shift-1752831146201"
+    ],
+    "2025-07-13": [
+      "shift-1752831146201"
+    ]
+  },
+  "specialDates": {
+    "2025-07-04": true
+  },
+  "settings": {
+    "basicSalary": 35000,
+    "hourlyRate": 201.92,
+    "overtimeMultiplier": 1.5,
+    "shiftCombinations": [
+      {
+        "id": "9-4",
+        "combination": "9-4",
+        "hours": 6.5,
+        "enabled": true
+      },
+      {
+        "id": "12-10",
+        "combination": "12-10",
+        "hours": 9.5,
+        "enabled": true
+      },
+      {
+        "id": "4-10",
+        "combination": "4-10",
+        "hours": 5.5,
+        "enabled": true
+      },
+      {
+        "id": "N",
+        "combination": "N",
+        "hours": 11,
+        "enabled": true
+      }
+    ],
+    "currency": "Rs",
+    "customShifts": [
+      {
+        "id": "shift-1752831146201",
+        "label": "Evening Shift",
+        "fromTime": "16:00",
+        "toTime": "22:00",
+        "normalHours": 6,
+        "overtimeHours": 0,
+        "hours": 6,
+        "enabled": true,
+        "applicableDays": {
+          "monday": true,
+          "tuesday": true,
+          "wednesday": true,
+          "thursday": true,
+          "friday": true,
+          "saturday": true,
+          "sunday": true,
+          "specialDay": true
+        }
+      }
+    ]
+  },
+  "scheduleTitle": "Work Schedule",
+  "exportDate": "2025-01-15T12:00:00.000Z",
+  "version": "3.0"
+}
