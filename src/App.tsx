@@ -236,6 +236,23 @@ function App() {
           console.log('  - window.debugAddToHomescreen.show() // Force show prompt');
           console.log('  - window.debugAddToHomescreen.isAppAlreadyInstalled() // Check install status');
           
+          // Add simple iOS Safari test
+          if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+            console.log('📱 iOS Safari specific commands:');
+            console.log('  - localStorage.setItem("pwa-installed", "true") // Mark as installed');
+            console.log('  - localStorage.removeItem("pwa-installed") // Clear installation flag');
+            console.log('  - localStorage.getItem("pwa-installed") // Check current flag');
+            
+            // Add a simple test function
+            (window as any).testIOSInstallation = () => {
+              const flag = localStorage.getItem('pwa-installed');
+              console.log('🔍 Current installation flag:', flag);
+              console.log('🔍 Should show prompt:', flag !== 'true');
+              return flag;
+            };
+            console.log('  - window.testIOSInstallation() // Test current status');
+          }
+          
           // iOS Safari specific commands
           if (/iPhone|iPad|iPod/.test(navigator.userAgent) && /Safari/.test(navigator.userAgent)) {
             console.log('📱 iOS Safari specific commands:');
@@ -266,6 +283,21 @@ function App() {
           // For iOS Safari, add additional detection when page loads
           if (/iPhone|iPad|iPod/.test(navigator.userAgent) && /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent)) {
             console.log('📱 iOS Safari detected - checking for previous installation');
+            
+            // IMMEDIATE DEBUG: Check localStorage flag
+            const installationFlag = localStorage.getItem('pwa-installed');
+            console.log('🔍 IMMEDIATE CHECK - localStorage pwa-installed:', installationFlag);
+            
+            // IMMEDIATE DEBUG: Test the isAppAlreadyInstalled function
+            addToHomescreenInstance.isAppAlreadyInstalled().then(isInstalled => {
+              console.log('🔍 IMMEDIATE CHECK - isAppAlreadyInstalled():', isInstalled);
+              if (isInstalled) {
+                console.log('✅ App detected as installed - should NOT show prompt');
+                return; // Don't show prompt
+              } else {
+                console.log('❌ App NOT detected as installed - will show prompt');
+              }
+            });
             
             // Check if user has previously installed the app
             const hasBeenInstalled = localStorage.getItem('pwa-installed') === 'true';
