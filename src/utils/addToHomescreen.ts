@@ -27,7 +27,7 @@ export class AddToHomescreen {
   private isMobile: boolean;
   private isChrome: boolean;
   private isSafari: boolean;
-  private hasShown: boolean = false;
+  private static hasShownThisSession: boolean = false;
 
   constructor(options: AddToHomescreenOptions = {}) {
     this.options = {
@@ -73,17 +73,17 @@ export class AddToHomescreen {
   }
 
   show(customMessage?: string): void {
-    // Only show once and only if not in standalone mode
-    if (this.hasShown || this.isStandaloneMode) {
+    // Only show once per session and only if not in standalone mode
+    if (AddToHomescreen.hasShownThisSession || this.isStandaloneMode) {
       console.log('🚫 Not showing prompt:', {
-        hasShown: this.hasShown,
+        hasShownThisSession: AddToHomescreen.hasShownThisSession,
         isStandalone: this.isStandaloneMode
       });
       return;
     }
 
     console.log('✅ Showing Add to Homescreen prompt');
-    this.hasShown = true;
+    AddToHomescreen.hasShownThisSession = true;
 
     const message = customMessage || this.getDefaultMessage();
     this.showModal(message);
