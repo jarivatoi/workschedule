@@ -53,7 +53,22 @@ export const MenuPanel: React.FC<MenuPanelProps> = ({
         button.textContent = 'Exporting...';
       }
       
-      await onExportData();
+      // Get export data with filename
+      const exportData = await workScheduleDB.exportAllData();
+      
+      // Create downloadable file with custom filename
+      const dataStr = JSON.stringify(exportData, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      
+      // Use the filename from export data
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = exportData.filename || 'WorkSchedule.json';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
       
       // Show success notification
       alert('✅ Data exported successfully! Check your downloads folder.');

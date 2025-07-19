@@ -317,7 +317,8 @@ class WorkScheduleDB {
       settings: finalSettings,
       scheduleTitle: scheduleTitle || 'Work Schedule',
       exportDate: new Date().toISOString(),
-      version: '3.0'
+      version: '3.0',
+      filename: this.generateExportFilename()
     };
 
     console.log('📦 Export data prepared:', {
@@ -328,6 +329,15 @@ class WorkScheduleDB {
     });
 
     return exportData;
+  }
+
+  private generateExportFilename(): string {
+    const now = new Date();
+    const day = now.getDate().toString().padStart(2, '0');
+    const month = (now.getMonth() + 1).toString().padStart(2, '0');
+    const year = now.getFullYear();
+    
+    return `WorkSchedule_${day}${month}${year}.json`;
   }
 
   async importAllData(data: any): Promise<void> {
