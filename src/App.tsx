@@ -89,8 +89,6 @@ function App() {
   const [showDebugPanel, setShowDebugPanel] = useState(false);
   const [debugInfo, setDebugInfo] = useState<any>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  const [tapCount, setTapCount] = useState(0);
-  const tapTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // ============================================================================
   // DATA PERSISTENCE SECTION
@@ -256,6 +254,33 @@ function App() {
             };
             console.log('  - window.testIOSInstallation() // Test current status');
           }
+          
+          // Add debug panel toggle for mobile
+          (window as any).showDebugPanel = () => {
+            setShowDebugPanel(true);
+            updateDebugInfo();
+          };
+          
+          (window as any).hideDebugPanel = () => {
+            setShowDebugPanel(false);
+          };
+          
+          const updateDebugInfo = async () => {
+            const isInstalled = await addToHomescreenInstance.isAppAlreadyInstalled();
+            const installationFlag = localStorage.getItem('pwa-installed');
+            const isStandalone = addToHomescreenInstance.isStandalone();
+            const userAgent = navigator.userAgent;
+            const isIOSSafari = /iPhone|iPad|iPod/.test(userAgent) && /Safari/.test(userAgent) && !/Chrome/.test(userAgent);
+            
+            setDebugInfo({
+              isInstalled,
+              installationFlag,
+              isStandalone,
+              isIOSSafari,
+              userAgent: userAgent.substring(0, 50) + '...',
+              canPrompt: addToHomescreenInstance.canPrompt()
+            });
+          };
           
           // iOS Safari specific commands
           if (/iPhone|iPad|iPod/.test(navigator.userAgent) && /Safari/.test(navigator.userAgent)) {
