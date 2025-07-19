@@ -217,11 +217,11 @@ function App() {
           const addToHomescreenInstance = new AddToHomescreen({
             appName: 'Work Schedule',
             appIconUrl: 'https://jarivatoi.github.io/workschedule/Icon.PNG',
-            maxModalDisplayCount: 1,
+            maxModalDisplayCount: 999,
             skipFirstVisit: false,
             startDelay: 3000,
             lifespan: 15000,
-            displayPace: 999999,
+            displayPace: 1,
             mustShowCustomPrompt: false
           });
 
