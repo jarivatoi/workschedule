@@ -145,6 +145,7 @@ export class AddToHomescreen {
     // Method 1: Check if app is in standalone mode (current session)
     if (this.isStandalone()) {
       console.log('🔍 App detected as installed (standalone mode)');
+      this.markAsInstalled(); // Ensure flag is set
       return true;
     }
 
@@ -154,6 +155,7 @@ export class AddToHomescreen {
         const relatedApps = await (navigator as any).getInstalledRelatedApps();
         if (relatedApps && relatedApps.length > 0) {
           console.log('🔍 App detected as installed (getInstalledRelatedApps)', relatedApps);
+          this.markAsInstalled(); // Ensure flag is set
           return true;
         }
       } catch (error) {
@@ -184,6 +186,7 @@ export class AddToHomescreen {
       
       if (!hasInstallPrompt) {
         console.log('🔍 App detected as installed (no beforeinstallprompt event)');
+        this.markAsInstalled(); // Ensure flag is set
         return true;
       }
     }
@@ -201,6 +204,7 @@ export class AddToHomescreen {
       const isIOSInstalled = (window.navigator as any).standalone === true;
       if (isIOSInstalled) {
         console.log('🔍 App detected as installed (iOS standalone)');
+        this.markAsInstalled(); // Ensure flag is set
         return true;
       }
     }
@@ -280,6 +284,7 @@ export class AddToHomescreen {
     
     // Check if app is already installed (including browser detection)
     const isInstalled = await this.isAppAlreadyInstalled();
+    console.log('🔍 Installation check result:', isInstalled);
     if (isInstalled) {
       console.log('🚫 App already installed - not showing prompt');
       return;

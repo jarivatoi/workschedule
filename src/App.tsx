@@ -233,6 +233,8 @@ function App() {
           console.log('  - window.debugAddToHomescreen.debugStandaloneStatus()');
           console.log('  - window.debugAddToHomescreen.markAsInstalled()');
           console.log('  - window.debugAddToHomescreen.clearInstallationFlag()');
+          console.log('  - window.debugAddToHomescreen.show() // Force show prompt');
+          console.log('  - window.debugAddToHomescreen.isAppAlreadyInstalled() // Check install status');
           
           // Device detection for appropriate prompt display
           const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
