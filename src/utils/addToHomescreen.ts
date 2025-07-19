@@ -101,15 +101,40 @@ export class AddToHomescreen {
     const isIOSStandalone = (window.navigator as any).standalone === true;
     const isAndroidStandalone = document.referrer.includes('android-app://');
     const isFullscreen = window.matchMedia('(display-mode: fullscreen)').matches;
+    const isMinimalUI = window.matchMedia('(display-mode: minimal-ui)').matches;
+    
+    // Check if launched from home screen (PWA context)
+    const isPWAContext = window.matchMedia('(display-mode: standalone)').matches ||
+                        window.matchMedia('(display-mode: fullscreen)').matches ||
+                        window.matchMedia('(display-mode: minimal-ui)').matches;
+    
+    // Check URL parameters that might indicate PWA launch
+    const urlParams = new URLSearchParams(window.location.search);
+    const isPWALaunch = urlParams.has('source') && urlParams.get('source') === 'pwa';
+    
+    // Check if running in a PWA-like environment
+    const hasNavigatorStandalone = 'standalone' in window.navigator;
+    const isIOSPWA = hasNavigatorStandalone && (window.navigator as any).standalone;
+    
+    // Additional check for installed PWA on desktop
+    const isDesktopPWA = window.matchMedia('(display-mode: standalone)').matches && 
+                        !('ontouchstart' in window);
     
     console.log('📱 Standalone Detection:', {
       isStandaloneDisplay,
       isIOSStandalone,
       isAndroidStandalone,
-      isFullscreen
+      isFullscreen,
+      isMinimalUI,
+      isPWAContext,
+      isPWALaunch,
+      isIOSPWA,
+      isDesktopPWA,
+      userAgent: navigator.userAgent.substring(0, 50) + '...'
     });
     
-    return isStandaloneDisplay || isIOSStandalone || isAndroidStandalone || isFullscreen;
+    return isStandaloneDisplay || isIOSStandalone || isAndroidStandalone || 
+           isFullscreen || isMinimalUI || isPWAContext || isIOSPWA || isDesktopPWA;
   }
 
   canPrompt(): boolean {
