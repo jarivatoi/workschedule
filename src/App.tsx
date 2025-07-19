@@ -239,15 +239,14 @@ function App() {
             canPrompt: addToHomescreenInstance.canPrompt()
           });
           
-          // Show prompt based on device capabilities
-          if (isMobile && !isStandalone) {
+          // Show prompt only if app is NOT already installed
+          if (!isStandalone && addToHomescreenInstance.canPrompt()) {
             console.log('✅ Showing Add to Homescreen prompt');
             addToHomescreenInstance.show();
-          } else if (!isMobile) {
-            console.log('💻 Desktop detected - showing desktop-friendly prompt');
-            addToHomescreenInstance.show();
+          } else if (isStandalone) {
+            console.log('📱 App already installed - skipping install prompt');
           } else {
-            console.log('❌ App already installed or conditions not met');
+            console.log('❌ Cannot show prompt - conditions not met');
           }
           
         } catch (error) {
