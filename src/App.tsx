@@ -221,7 +221,7 @@ function App() {
             skipFirstVisit: false,
             startDelay: 3000,
             lifespan: 15000,
-            displayPace: 1440, // Show every 24 hours if not installed
+            displayPace: 0, // Show instantly on every visit if not installed
             mustShowCustomPrompt: false
           });
 
