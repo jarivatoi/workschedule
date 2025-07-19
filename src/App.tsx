@@ -221,7 +221,7 @@ function App() {
             skipFirstVisit: false,
             startDelay: 3000,
             lifespan: 15000,
-            displayPace: 1,
+            displayPace: 0,
             mustShowCustomPrompt: false
           });
 
