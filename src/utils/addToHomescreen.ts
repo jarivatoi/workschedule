@@ -1,22 +1,16 @@
-// Add to Home Screen functionality based on philfung/add-to-homescreen
-// https://github.com/philfung/add-to-homescreen
+// Add to Home Screen functionality - Simple one-time prompt
+// Shows only once at startup with 3 second delay
 
 interface AddToHomescreenOptions {
   appName?: string;
   appIconUrl?: string;
-  maxModalDisplayCount?: number;
-  skipFirstVisit?: boolean;
   startDelay?: number;
   lifespan?: number;
-  displayPace?: number;
-  mustShowCustomPrompt?: boolean;
 }
 
 interface AddToHomescreenInstance {
   show: (message?: string) => void;
-  clearModalDisplayCount: () => void;
   isStandalone: () => boolean;
-  canPrompt: () => boolean;
 }
 
 declare global {
@@ -27,35 +21,24 @@ declare global {
 
 export class AddToHomescreen {
   private options: AddToHomescreenOptions;
-  private modalDisplayCount: number = 0;
-  private maxModalDisplayCount: number;
   private isIOS: boolean;
   private isAndroid: boolean;
   private isStandaloneMode: boolean;
   private isMobile: boolean;
   private isChrome: boolean;
   private isSafari: boolean;
-  private isFirefox: boolean;
-  private isEdge: boolean;
-  private isOpera: boolean;
-  private isSamsung: boolean;
+  private hasShown: boolean = false;
 
   constructor(options: AddToHomescreenOptions = {}) {
     this.options = {
       appName: 'Work Schedule',
-      appIconUrl: '/workschedule/icon.png',
-      maxModalDisplayCount: 3,
-      skipFirstVisit: false,
-      startDelay: 2000,
+      appIconUrl: 'https://jarivatoi.github.io/workschedule/icon.png',
+      startDelay: 3000,
       lifespan: 15000,
-      displayPace: 1440, // 24 hours in minutes
-      mustShowCustomPrompt: false, // Don't force show by default
       ...options
     };
     
-    this.maxModalDisplayCount = this.options.maxModalDisplayCount || 3;
-    
-    // Enhanced device detection like philfung
+    // Enhanced device detection
     const ua = navigator.userAgent;
     
     this.isIOS = /iPad|iPhone|iPod/.test(ua);
@@ -63,10 +46,6 @@ export class AddToHomescreen {
     this.isMobile = this.isIOS || this.isAndroid;
     this.isChrome = /Chrome/.test(ua) && !/Edge/.test(ua);
     this.isSafari = /Safari/.test(ua) && !/Chrome/.test(ua);
-    this.isFirefox = /Firefox/.test(ua);
-    this.isEdge = /Edge/.test(ua);
-    this.isOpera = /Opera/.test(ua) || /OPR/.test(ua);
-    this.isSamsung = /SamsungBrowser/.test(ua);
     
     this.isStandaloneMode = this.isStandalone();
     
@@ -79,263 +58,35 @@ export class AddToHomescreen {
       isStandalone: this.isStandaloneMode,
       userAgent: ua
     });
-    
-    // Load display count from localStorage
-    const stored = localStorage.getItem('addToHomescreenModalCount');
-    this.modalDisplayCount = stored ? parseInt(stored, 10) : 0;
-    
-    // Check if we should skip first visit
-    if (this.options.skipFirstVisit) {
-      const firstVisit = localStorage.getItem('addToHomescreenFirstVisit');
-      if (!firstVisit) {
-        localStorage.setItem('addToHomescreenFirstVisit', 'true');
-        console.log('🚫 Skipping first visit');
-        return;
-      }
-    }
   }
 
   isStandalone(): boolean {
-    // Multiple checks for standalone mode like philfung
+    // Check if running in standalone mode (PWA)
     const isStandaloneDisplay = window.matchMedia('(display-mode: standalone)').matches;
     const isIOSStandalone = (window.navigator as any).standalone === true;
     const isAndroidStandalone = document.referrer.includes('android-app://');
     const isFullscreen = window.matchMedia('(display-mode: fullscreen)').matches;
     const isMinimalUI = window.matchMedia('(display-mode: minimal-ui)').matches;
     
-    // Check if launched from home screen (PWA context)
-    const isPWAContext = window.matchMedia('(display-mode: standalone)').matches ||
-                        window.matchMedia('(display-mode: fullscreen)').matches ||
-                        window.matchMedia('(display-mode: minimal-ui)').matches;
-    
-    // Check URL parameters that might indicate PWA launch
-    const urlParams = new URLSearchParams(window.location.search);
-    const isPWALaunch = urlParams.has('source') && urlParams.get('source') === 'pwa';
-    
-    // Check if running in a PWA-like environment
-    const hasNavigatorStandalone = 'standalone' in window.navigator;
-    const isIOSPWA = hasNavigatorStandalone && (window.navigator as any).standalone;
-    
-    // Additional check for installed PWA on desktop
-    const isDesktopPWA = window.matchMedia('(display-mode: standalone)').matches && 
-                        !('ontouchstart' in window);
-    
-    console.log('📱 Standalone Detection:', {
-      isStandaloneDisplay,
-      isIOSStandalone,
-      isAndroidStandalone,
-      isFullscreen,
-      isMinimalUI,
-      isPWAContext,
-      isPWALaunch,
-      isIOSPWA,
-      isDesktopPWA,
-      userAgent: navigator.userAgent.substring(0, 50) + '...'
-    });
-    
     return isStandaloneDisplay || isIOSStandalone || isAndroidStandalone || 
-           isFullscreen || isMinimalUI || isPWAContext || isIOSPWA || isDesktopPWA;
+           isFullscreen || isMinimalUI;
   }
 
-  /**
-   * Check if PWA is already installed on the device (even when viewing in browser)
-   * Uses multiple detection methods to determine if app is installed
-   */
-  async isAppAlreadyInstalled(): Promise<boolean> {
-    // Method 1: Check if app is in standalone mode (current session)
-    if (this.isStandalone()) {
-      console.log('🔍 App detected as installed (standalone mode)');
-      this.markAsInstalled(); // Ensure flag is set
-      return true;
-    }
-
-    // Method 2: Check localStorage flag first (most reliable for iOS Safari)
-    const installationFlag = localStorage.getItem('pwa-installed');
-    if (installationFlag === 'true') {
-      console.log('🔍 App detected as installed (localStorage flag)');
-      return true;
-    }
-
-    // Method 3: iOS Safari specific detection
-    if (this.isIOS && this.isSafari) {
-      // Check if we can detect home screen installation on iOS
-      const isIOSInstalled = (window.navigator as any).standalone === true;
-      if (isIOSInstalled) {
-        console.log('🔍 App detected as installed (iOS standalone)');
-        this.markAsInstalled(); // Ensure flag is set
-        return true;
-      }
-      
-      // For iOS Safari, we rely heavily on localStorage flag
-      // since other detection methods are not available
-      console.log('🔍 iOS Safari: Relying on localStorage flag for detection');
-      return false; // Only show if not marked as installed
-    }
-    // Method 4: Use getInstalledRelatedApps API (Chrome/Edge - not available on iOS)
-    if ('getInstalledRelatedApps' in navigator) {
-      try {
-        const relatedApps = await (navigator as any).getInstalledRelatedApps();
-        if (relatedApps && relatedApps.length > 0) {
-          console.log('🔍 App detected as installed (getInstalledRelatedApps)', relatedApps);
-          this.markAsInstalled(); // Ensure flag is set
-          return true;
-        }
-      } catch (error) {
-        console.log('🔍 getInstalledRelatedApps not available or failed:', error);
-      }
-    }
-
-    // Method 5: Check for beforeinstallprompt event behavior (not available on iOS)
-    // If the event doesn't fire or is null, app might be installed
-    if ('onbeforeinstallprompt' in window) {
-      const hasInstallPrompt = await new Promise<boolean>((resolve) => {
-        let hasPrompt = false;
-        
-        const handler = (e: Event) => {
-          hasPrompt = true;
-          e.preventDefault(); // Prevent default browser install prompt
-          resolve(true);
-        };
-        
-        window.addEventListener('beforeinstallprompt', handler, { once: true });
-        
-        // If no prompt fires within 100ms, assume app is installed
-        setTimeout(() => {
-          window.removeEventListener('beforeinstallprompt', handler);
-          resolve(hasPrompt);
-        }, 100);
-      });
-      
-      if (!hasInstallPrompt) {
-        console.log('🔍 App detected as installed (no beforeinstallprompt event)');
-        this.markAsInstalled(); // Ensure flag is set
-        return true;
-      }
-    }
-
-
-    console.log('🔍 App not detected as installed');
-    return false;
-  }
-
-  /**
-   * Set installation flag when app is installed
-   */
-  markAsInstalled(): void {
-    localStorage.setItem('pwa-installed', 'true');
-    console.log('✅ Marked app as installed in localStorage');
-  }
-
-  /**
-   * Clear installation flag (for testing)
-   */
-  clearInstallationFlag(): void {
-    localStorage.removeItem('pwa-installed');
-    console.log('🧹 Cleared installation flag');
-  }
-
-  canPrompt(): boolean {
-    // This will be checked asynchronously in the show method
-    // For now, just check basic conditions
-    
-    // Check display count limit only if maxModalDisplayCount is reasonable (not 999)
-    if (this.maxModalDisplayCount < 999 && this.modalDisplayCount >= this.maxModalDisplayCount) {
-      console.log('🚫 Maximum display count reached');
-      return false;
-    }
-    
-    // Check if enough time has passed since last display
-    const lastDisplayTime = localStorage.getItem('addToHomescreenLastDisplay');
-    if (lastDisplayTime) {
-      const timeSinceLastDisplay = Date.now() - parseInt(lastDisplayTime, 10);
-      const minInterval = (this.options.displayPace || 0) * 60 * 1000; // Convert minutes to milliseconds
-      
-      // Only check time interval if displayPace is greater than 0
-      if (this.options.displayPace > 0 && timeSinceLastDisplay < minInterval) {
-        console.log(`🚫 Not enough time passed since last display (${Math.round(timeSinceLastDisplay / 1000)}s < ${minInterval / 1000}s)`);
-        return false;
-      }
-    }
-    
-    const canShow = true;
-    
-    console.log('✅ Can Prompt Check:', {
-      isStandalone: this.isStandaloneMode,
-      displayCount: this.modalDisplayCount,
-      maxCount: this.maxModalDisplayCount,
-      isMobile: this.isMobile, 
-      lastDisplayTime,
-      canShow
-    });
-    
-    return canShow;
-  }
-
-  private getCurrentDisplayMode(): string {
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      return 'standalone';
-    }
-    if (window.matchMedia('(display-mode: minimal-ui)').matches) {
-      return 'minimal-ui';
-    }
-    if (window.matchMedia('(display-mode: fullscreen)').matches) {
-      return 'fullscreen';
-    }
-    return 'browser';
-  }
-
-  async show(customMessage?: string): Promise<void> {
-    console.log('🚀 Attempting to show Add to Homescreen prompt...');
-    
-    // Check if app is already installed (including browser detection)
-    const isInstalled = await this.isAppAlreadyInstalled();
-    console.log('🔍 Installation check result:', isInstalled);
-    if (isInstalled) {
-      console.log('🚫 App already installed - not showing prompt');
-      return;
-    }
-    
-    if (!this.canPrompt()) {
-      console.log('🚫 AddToHomescreen: Cannot show prompt', {
-        canPrompt: this.canPrompt(),
-        displayCount: this.modalDisplayCount,
-        maxCount: this.maxModalDisplayCount
+  show(customMessage?: string): void {
+    // Only show once and only if not in standalone mode
+    if (this.hasShown || this.isStandaloneMode) {
+      console.log('🚫 Not showing prompt:', {
+        hasShown: this.hasShown,
+        isStandalone: this.isStandaloneMode
       });
       return;
     }
 
-    console.log('✅ Showing Add to Homescreen modal');
-    this.modalDisplayCount++;
-    localStorage.setItem('addToHomescreenModalCount', this.modalDisplayCount.toString());
-    localStorage.setItem('addToHomescreenLastDisplay', Date.now().toString());
+    console.log('✅ Showing Add to Homescreen prompt');
+    this.hasShown = true;
 
     const message = customMessage || this.getDefaultMessage();
     this.showModal(message);
-  }
-
-  clearModalDisplayCount(): void {
-    this.modalDisplayCount = 0;
-    localStorage.removeItem('addToHomescreenModalCount');
-    localStorage.removeItem('addToHomescreenFirstVisit');
-    localStorage.removeItem('addToHomescreenLastDisplay');
-    console.log('🧹 Cleared Add to Homescreen display count');
-  }
-
-  // Debug method to manually check standalone status
-  debugStandaloneStatus(): void {
-    this.isAppAlreadyInstalled().then(isInstalled => {
-      console.log('🔍 Debug Installation Status:', {
-        isStandalone: this.isStandalone(),
-        displayMode: this.getCurrentDisplayMode(),
-        isAppInstalled: isInstalled,
-        canPrompt: this.canPrompt(),
-        modalCount: this.modalDisplayCount,
-        hasBeforeInstallPrompt: 'onbeforeinstallprompt' in window,
-        hasGetInstalledRelatedApps: 'getInstalledRelatedApps' in navigator,
-        installationFlag: localStorage.getItem('pwa-installed'),
-        userAgent: navigator.userAgent.substring(0, 50)
-      });
-    });
   }
 
   private getDefaultMessage(): string {
@@ -351,7 +102,7 @@ export class AddToHomescreen {
   }
 
   private showModal(message: string): void {
-    // Create modal overlay with philfung styling approach
+    // Create modal overlay
     const overlay = document.createElement('div');
     overlay.style.cssText = `
       position: fixed;
@@ -527,7 +278,7 @@ export class AddToHomescreen {
   }
 }
 
-// Global function for easy access (like philfung)
+// Global function for easy access
 window.addToHomescreen = (options?: AddToHomescreenOptions) => {
   return new AddToHomescreen(options);
 };

@@ -89,8 +89,6 @@ function App() {
   const [showDebugPanel, setShowDebugPanel] = useState(false);
   const [debugInfo, setDebugInfo] = useState<any>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  const [tapCount, setTapCount] = useState(0);
-  const tapTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // ============================================================================
   // DATA PERSISTENCE SECTION
@@ -207,117 +205,30 @@ function App() {
   
   /**
    * ADD TO HOMESCREEN INITIALIZATION
-   * Implements Progressive Web App functionality for mobile installation
-   * Only initializes after app has finished loading to avoid interference
+   * Simple one-time prompt with 3 second delay
    */
   useEffect(() => {
     if (!isLoading) {
-      console.log('🏠 Initializing Add to Homescreen...');
+      console.log('🏠 Initializing simple Add to Homescreen prompt...');
       
-      // Delay to ensure everything is settled
+      // 3 second delay before showing prompt
       setTimeout(() => {
         try {
-          // Create AddToHomescreen instance with mobile-optimized settings
+          // Create simple AddToHomescreen instance
           const addToHomescreenInstance = new AddToHomescreen({
             appName: 'Work Schedule',
             appIconUrl: 'https://jarivatoi.github.io/workschedule/Icon.PNG',
-            maxModalDisplayCount: 999,
-            skipFirstVisit: false,
             startDelay: 3000,
-            lifespan: 15000,
-            displayPace: 0,
-            mustShowCustomPrompt: false
+            lifespan: 15000
           });
 
-          console.log('📱 Add to Homescreen instance created');
-          
-          // Add global access for debugging
-          (window as any).debugAddToHomescreen = addToHomescreenInstance;
-          console.log('🔧 Debug commands:');
-          console.log('  - window.debugAddToHomescreen.debugStandaloneStatus()');
-          console.log('  - window.debugAddToHomescreen.markAsInstalled()');
-          console.log('  - window.debugAddToHomescreen.clearInstallationFlag()');
-          console.log('  - window.debugAddToHomescreen.show() // Force show prompt');
-          console.log('  - window.debugAddToHomescreen.isAppAlreadyInstalled() // Check install status');
-          
-          // Add simple iOS Safari test
-          if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
-            console.log('📱 iOS Safari specific commands:');
-            console.log('  - localStorage.setItem("pwa-installed", "true") // Mark as installed');
-            console.log('  - localStorage.removeItem("pwa-installed") // Clear installation flag');
-            console.log('  - localStorage.getItem("pwa-installed") // Check current flag');
-            
-            // Add a simple test function
-            (window as any).testIOSInstallation = () => {
-              const flag = localStorage.getItem('pwa-installed');
-              console.log('🔍 Current installation flag:', flag);
-              console.log('🔍 Should show prompt:', flag !== 'true');
-              return flag;
-            };
-            console.log('  - window.testIOSInstallation() // Test current status');
-          }
-          
-          // iOS Safari specific commands
-          if (/iPhone|iPad|iPod/.test(navigator.userAgent) && /Safari/.test(navigator.userAgent)) {
-            console.log('📱 iOS Safari specific commands:');
-            console.log('  - localStorage.setItem("pwa-installed", "true") // Mark as installed');
-            console.log('  - localStorage.removeItem("pwa-installed") // Clear installation flag');
-            console.log('  - localStorage.getItem("pwa-installed") // Check current flag');
-          }
-          
-          // Device detection for appropriate prompt display
-          const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-          const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
-                              (window.navigator as any).standalone === true;
-          
-          // If we're in standalone mode, mark as installed
-          if (isStandalone) {
-            addToHomescreenInstance.markAsInstalled();
-            console.log('📱 Marked app as installed (standalone mode detected)');
-          }
-          
-          console.log('📱 Device info:', {
-            isMobile,
-            isStandalone,
-            userAgent: navigator.userAgent,
-            canPrompt: addToHomescreenInstance.canPrompt(),
-            installationFlag: localStorage.getItem('pwa-installed')
-          });
-          
-          // For iOS Safari, add additional detection when page loads
-          if (/iPhone|iPad|iPod/.test(navigator.userAgent) && /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent)) {
-            console.log('📱 iOS Safari detected - checking for previous installation');
-            
-            // IMMEDIATE DEBUG: Check localStorage flag
-            const installationFlag = localStorage.getItem('pwa-installed');
-            console.log('🔍 IMMEDIATE CHECK - localStorage pwa-installed:', installationFlag);
-            
-            // IMMEDIATE DEBUG: Test the isAppAlreadyInstalled function
-            addToHomescreenInstance.isAppAlreadyInstalled().then(isInstalled => {
-              console.log('🔍 IMMEDIATE CHECK - isAppAlreadyInstalled():', isInstalled);
-              if (isInstalled) {
-                console.log('✅ App detected as installed - should NOT show prompt');
-                return; // Don't show prompt
-              } else {
-                console.log('❌ App NOT detected as installed - will show prompt');
-              }
-            });
-            
-            // Check if user has previously installed the app
-            const hasBeenInstalled = localStorage.getItem('pwa-installed') === 'true';
-            if (hasBeenInstalled) {
-              console.log('📱 iOS Safari: App previously installed, skipping prompt');
-              return; // Don't show prompt
-            }
-          }
-          
-          // Show prompt (it will check installation status internally)
+          console.log('📱 Showing one-time Add to Homescreen prompt');
           addToHomescreenInstance.show();
           
         } catch (error) {
           console.error('❌ Error initializing Add to Homescreen:', error);
         }
-      }, 3000);
+      }, 3000); // 3 second delay
     }
   }, [isLoading]);
 
