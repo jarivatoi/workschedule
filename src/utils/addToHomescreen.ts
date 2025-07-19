@@ -144,6 +144,17 @@ export class AddToHomescreen {
       return false;
     }
     
+    // Additional check: if we're in a browser with specific PWA indicators
+    const isPWABrowser = window.matchMedia('(display-mode: browser)').matches;
+    const hasInstallPrompt = 'onbeforeinstallprompt' in window;
+    
+    console.log('🔍 PWA Browser Check:', {
+      isPWABrowser,
+      hasInstallPrompt,
+      currentDisplayMode: this.getCurrentDisplayMode(),
+      userAgent: navigator.userAgent.substring(0, 50)
+    });
+    
     // Check display count limit only if maxModalDisplayCount is reasonable (not 999)
     if (this.maxModalDisplayCount < 999 && this.modalDisplayCount >= this.maxModalDisplayCount) {
       console.log('🚫 Maximum display count reached');
@@ -177,6 +188,19 @@ export class AddToHomescreen {
     return canShow;
   }
 
+  private getCurrentDisplayMode(): string {
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      return 'standalone';
+    }
+    if (window.matchMedia('(display-mode: minimal-ui)').matches) {
+      return 'minimal-ui';
+    }
+    if (window.matchMedia('(display-mode: fullscreen)').matches) {
+      return 'fullscreen';
+    }
+    return 'browser';
+  }
+
   show(customMessage?: string): void {
     console.log('🚀 Attempting to show Add to Homescreen prompt...');
     
@@ -204,6 +228,17 @@ export class AddToHomescreen {
     localStorage.removeItem('addToHomescreenFirstVisit');
     localStorage.removeItem('addToHomescreenLastDisplay');
     console.log('🧹 Cleared Add to Homescreen display count');
+  }
+
+  // Debug method to manually check standalone status
+  debugStandaloneStatus(): void {
+    console.log('🔍 Debug Standalone Status:', {
+      isStandalone: this.isStandalone(),
+      displayMode: this.getCurrentDisplayMode(),
+      canPrompt: this.canPrompt(),
+      modalCount: this.modalDisplayCount,
+      userAgent: navigator.userAgent
+    });
   }
 
   private getDefaultMessage(): string {

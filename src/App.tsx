@@ -227,6 +227,10 @@ function App() {
 
           console.log('📱 Add to Homescreen instance created');
           
+          // Add global access for debugging
+          (window as any).debugAddToHomescreen = addToHomescreenInstance;
+          console.log('🔧 Debug: Use window.debugAddToHomescreen.debugStandaloneStatus() to check status');
+          
           // Device detection for appropriate prompt display
           const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
           const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
