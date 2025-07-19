@@ -43,7 +43,7 @@ export class AddToHomescreen {
   constructor(options: AddToHomescreenOptions = {}) {
     this.options = {
       appName: 'Work Schedule',
-      appIconUrl: '/workschedule/Icon.PNG',
+      appIconUrl: '/workschedule/icon.png',
       maxModalDisplayCount: 3,
       skipFirstVisit: false,
       startDelay: 2000,
@@ -241,7 +241,7 @@ export class AddToHomescreen {
 
     // App icon
     const icon = document.createElement('img');
-    icon.src = this.options.appIconUrl || '/icon.svg';
+    icon.src = this.options.appIconUrl || '/icon.png';
     icon.style.cssText = `
       width: 64px;
       height: 64px;
