@@ -119,8 +119,8 @@ export class AddToHomescreen {
       return false;
     }
     
-    // Check display count limit
-    if (this.modalDisplayCount >= this.maxModalDisplayCount) {
+    // Check display count limit only if maxModalDisplayCount is reasonable (not 999)
+    if (this.maxModalDisplayCount < 999 && this.modalDisplayCount >= this.maxModalDisplayCount) {
       console.log('🚫 Maximum display count reached');
       return false;
     }
@@ -129,10 +129,10 @@ export class AddToHomescreen {
     const lastDisplayTime = localStorage.getItem('addToHomescreenLastDisplay');
     if (lastDisplayTime) {
       const timeSinceLastDisplay = Date.now() - parseInt(lastDisplayTime, 10);
-      const minInterval = (this.options.displayPace || 1440) * 60 * 1000; // Convert minutes to milliseconds
+      const minInterval = (this.options.displayPace || 1) * 60 * 1000; // Convert minutes to milliseconds
       
       if (timeSinceLastDisplay < minInterval) {
-        console.log('🚫 Not enough time passed since last display');
+        console.log(`🚫 Not enough time passed since last display (${Math.round(timeSinceLastDisplay / 1000)}s < ${minInterval / 1000}s)`);
         return false;
       }
     }
