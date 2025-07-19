@@ -337,7 +337,7 @@ class WorkScheduleDB {
     const month = (now.getMonth() + 1).toString().padStart(2, '0');
     const year = now.getFullYear();
     
-    return `WorkSchedule_${day}${month}${year}.json`;
+    return `Workschedule_${day}-${month}-${year}.json`;
   }
 
   async importAllData(data: any): Promise<void> {
