@@ -236,6 +236,14 @@ function App() {
           console.log('  - window.debugAddToHomescreen.show() // Force show prompt');
           console.log('  - window.debugAddToHomescreen.isAppAlreadyInstalled() // Check install status');
           
+          // iOS Safari specific commands
+          if (/iPhone|iPad|iPod/.test(navigator.userAgent) && /Safari/.test(navigator.userAgent)) {
+            console.log('📱 iOS Safari specific commands:');
+            console.log('  - localStorage.setItem("pwa-installed", "true") // Mark as installed');
+            console.log('  - localStorage.removeItem("pwa-installed") // Clear installation flag');
+            console.log('  - localStorage.getItem("pwa-installed") // Check current flag');
+          }
+          
           // Device detection for appropriate prompt display
           const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
           const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
@@ -244,6 +252,7 @@ function App() {
           // If we're in standalone mode, mark as installed
           if (isStandalone) {
             addToHomescreenInstance.markAsInstalled();
+            console.log('📱 Marked app as installed (standalone mode detected)');
           }
           
           console.log('📱 Device info:', {
@@ -253,6 +262,18 @@ function App() {
             canPrompt: addToHomescreenInstance.canPrompt(),
             installationFlag: localStorage.getItem('pwa-installed')
           });
+          
+          // For iOS Safari, add additional detection when page loads
+          if (/iPhone|iPad|iPod/.test(navigator.userAgent) && /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent)) {
+            console.log('📱 iOS Safari detected - checking for previous installation');
+            
+            // Check if user has previously installed the app
+            const hasBeenInstalled = localStorage.getItem('pwa-installed') === 'true';
+            if (hasBeenInstalled) {
+              console.log('📱 iOS Safari: App previously installed, skipping prompt');
+              return; // Don't show prompt
+            }
+          }
           
           // Show prompt (it will check installation status internally)
           addToHomescreenInstance.show();

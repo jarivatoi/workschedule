@@ -149,7 +149,29 @@ export class AddToHomescreen {
       return true;
     }
 
-    // Method 2: Use getInstalledRelatedApps API (Chrome/Edge)
+    // Method 2: Check localStorage flag first (most reliable for iOS Safari)
+    const installationFlag = localStorage.getItem('pwa-installed');
+    if (installationFlag === 'true') {
+      console.log('🔍 App detected as installed (localStorage flag)');
+      return true;
+    }
+
+    // Method 3: iOS Safari specific detection
+    if (this.isIOS && this.isSafari) {
+      // Check if we can detect home screen installation on iOS
+      const isIOSInstalled = (window.navigator as any).standalone === true;
+      if (isIOSInstalled) {
+        console.log('🔍 App detected as installed (iOS standalone)');
+        this.markAsInstalled(); // Ensure flag is set
+        return true;
+      }
+      
+      // For iOS Safari, we rely heavily on localStorage flag
+      // since other detection methods are not available
+      console.log('🔍 iOS Safari: Relying on localStorage flag for detection');
+      return false; // Only show if not marked as installed
+    }
+    // Method 4: Use getInstalledRelatedApps API (Chrome/Edge - not available on iOS)
     if ('getInstalledRelatedApps' in navigator) {
       try {
         const relatedApps = await (navigator as any).getInstalledRelatedApps();
@@ -163,7 +185,7 @@ export class AddToHomescreen {
       }
     }
 
-    // Method 3: Check for beforeinstallprompt event behavior
+    // Method 5: Check for beforeinstallprompt event behavior (not available on iOS)
     // If the event doesn't fire or is null, app might be installed
     if ('onbeforeinstallprompt' in window) {
       const hasInstallPrompt = await new Promise<boolean>((resolve) => {
@@ -191,23 +213,6 @@ export class AddToHomescreen {
       }
     }
 
-    // Method 4: Check localStorage for previous installation flag
-    const installationFlag = localStorage.getItem('pwa-installed');
-    if (installationFlag === 'true') {
-      console.log('🔍 App detected as installed (localStorage flag)');
-      return true;
-    }
-
-    // Method 5: Check for iOS home screen bookmark
-    if (this.isIOS) {
-      // On iOS, check if we can detect home screen installation
-      const isIOSInstalled = (window.navigator as any).standalone === true;
-      if (isIOSInstalled) {
-        console.log('🔍 App detected as installed (iOS standalone)');
-        this.markAsInstalled(); // Ensure flag is set
-        return true;
-      }
-    }
 
     console.log('🔍 App not detected as installed');
     return false;
