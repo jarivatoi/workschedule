@@ -129,9 +129,10 @@ export class AddToHomescreen {
     const lastDisplayTime = localStorage.getItem('addToHomescreenLastDisplay');
     if (lastDisplayTime) {
       const timeSinceLastDisplay = Date.now() - parseInt(lastDisplayTime, 10);
-      const minInterval = (this.options.displayPace || 1) * 60 * 1000; // Convert minutes to milliseconds
+      const minInterval = (this.options.displayPace || 0) * 60 * 1000; // Convert minutes to milliseconds
       
-      if (timeSinceLastDisplay < minInterval) {
+      // Only check time interval if displayPace is greater than 0
+      if (this.options.displayPace > 0 && timeSinceLastDisplay < minInterval) {
         console.log(`🚫 Not enough time passed since last display (${Math.round(timeSinceLastDisplay / 1000)}s < ${minInterval / 1000}s)`);
         return false;
       }
