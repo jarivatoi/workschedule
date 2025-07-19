@@ -217,11 +217,11 @@ function App() {
           const addToHomescreenInstance = new AddToHomescreen({
             appName: 'Work Schedule',
             appIconUrl: 'https://jarivatoi.github.io/workschedule/Icon.PNG',
-            maxModalDisplayCount: 1,
+            maxModalDisplayCount: 999, // Allow unlimited prompts until installed
             skipFirstVisit: false,
             startDelay: 3000,
             lifespan: 15000,
-            displayPace: 999999,
+            displayPace: 1440, // Show every 24 hours if not installed
             mustShowCustomPrompt: false
           });
 
@@ -244,7 +244,9 @@ function App() {
             console.log('✅ Showing Add to Homescreen prompt');
             addToHomescreenInstance.show();
           } else if (isStandalone) {
-            console.log('📱 App already installed - skipping install prompt');
+            console.log('📱 App already installed - clearing display count and skipping prompt');
+            // Clear the display count since app is now installed
+            addToHomescreenInstance.clearModalDisplayCount();
           } else {
             console.log('❌ Cannot show prompt - conditions not met');
           }
