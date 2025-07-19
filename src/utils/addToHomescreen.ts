@@ -11,9 +11,13 @@ export class AddToHomescreen {
   }
 
   show(): void {
-    // Don't show if already running as installed PWA
-    if (window.matchMedia('(display-mode: standalone)').matches || 
-        (window.navigator as any).standalone === true) {
+    // Don't show if already running as installed PWA (works on iOS, Android, Desktop)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                         (window.navigator as any).standalone === true ||
+                         window.matchMedia('(display-mode: fullscreen)').matches ||
+                         window.matchMedia('(display-mode: minimal-ui)').matches;
+    
+    if (isStandalone) {
       console.log('🚫 App is already installed as PWA, skipping prompt');
       return;
     }
