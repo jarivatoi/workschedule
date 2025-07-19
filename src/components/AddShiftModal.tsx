@@ -517,7 +517,7 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Normal Hours</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2 text-center">Normal Hours</label>
                 <input
                   type="number"
                   inputMode="decimal"
@@ -550,7 +550,7 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Overtime Hours</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2 text-center">Overtime Hours</label>
                 <input
                   type="number"
                   inputMode="decimal"
@@ -585,7 +585,7 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Normal Allowance</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2 text-center">Normal Allowance</label>
                 <input
                   type="number"
                   inputMode="decimal"
@@ -610,7 +610,7 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Overtime Allowance</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2 text-center">Overtime Allowance</label>
                 <input
                   type="number"
                   inputMode="decimal"
