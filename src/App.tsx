@@ -53,12 +53,6 @@ import { DEFAULT_SHIFT_COMBINATIONS } from './constants';
 import { DaySchedule, SpecialDates, Settings, ExportData } from './types';
 import { gsap } from 'gsap';
 
-// Declare global window property to prevent multiple prompts
-declare global {
-  interface Window {
-    hasShownAddToHomescreenPrompt?: boolean;
-  }
-}
 
 function App() {
   // ============================================================================
@@ -212,37 +206,25 @@ function App() {
   
   /**
    * ADD TO HOMESCREEN INITIALIZATION
-   * Simple one-time prompt with 3 second delay
+   * Shows only once on first visit with 3 second delay
    */
   useEffect(() => {
     if (!isLoading) {
-      console.log('🏠 Initializing simple Add to Homescreen prompt...');
+      console.log('🏠 Checking if should show Add to Homescreen prompt...');
       
-      // Use a ref to ensure this only runs once per session
-      if (!window.hasShownAddToHomescreenPrompt) {
-        window.hasShownAddToHomescreenPrompt = true;
-        
-        // 3 second delay before showing prompt
-        setTimeout(() => {
-          try {
-            // Create simple AddToHomescreen instance
-            const addToHomescreenInstance = new AddToHomescreen({
-              appName: 'Work Schedule',
-              appIconUrl: 'https://jarivatoi.github.io/workschedule/Icon.PNG',
-              startDelay: 0, // No additional delay since we're already waiting 3s
-              lifespan: 15000
-            });
+      // 3 second delay before checking/showing prompt
+      setTimeout(() => {
+        try {
+          const addToHomescreenInstance = new AddToHomescreen({
+            appName: 'Work Schedule',
+            appIconUrl: 'https://jarivatoi.github.io/workschedule/icon.png'
+          });
 
-            console.log('📱 Showing one-time Add to Homescreen prompt');
-            addToHomescreenInstance.show();
-            
-          } catch (error) {
-            console.error('❌ Error initializing Add to Homescreen:', error);
-          }
-        }, 3000); // 3 second delay
-      } else {
-        console.log('🚫 Add to Homescreen prompt already shown this session');
-      }
+          addToHomescreenInstance.show();
+        } catch (error) {
+          console.error('❌ Error showing Add to Homescreen:', error);
+        }
+      }, 3000); // 3 second delay
     }
   }, [isLoading]);
 
