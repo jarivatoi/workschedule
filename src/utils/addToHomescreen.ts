@@ -137,23 +137,97 @@ export class AddToHomescreen {
            isFullscreen || isMinimalUI || isPWAContext || isIOSPWA || isDesktopPWA;
   }
 
-  canPrompt(): boolean {
-    // Check if app is already installed (standalone mode)
-    if (this.isStandaloneMode) {
-      console.log('🚫 App already installed in standalone mode');
-      return false;
+  /**
+   * Check if PWA is already installed on the device (even when viewing in browser)
+   * Uses multiple detection methods to determine if app is installed
+   */
+  async isAppAlreadyInstalled(): Promise<boolean> {
+    // Method 1: Check if app is in standalone mode (current session)
+    if (this.isStandalone()) {
+      console.log('🔍 App detected as installed (standalone mode)');
+      return true;
     }
-    
-    // Additional check: if we're in a browser with specific PWA indicators
-    const isPWABrowser = window.matchMedia('(display-mode: browser)').matches;
-    const hasInstallPrompt = 'onbeforeinstallprompt' in window;
-    
-    console.log('🔍 PWA Browser Check:', {
-      isPWABrowser,
-      hasInstallPrompt,
-      currentDisplayMode: this.getCurrentDisplayMode(),
-      userAgent: navigator.userAgent.substring(0, 50)
-    });
+
+    // Method 2: Use getInstalledRelatedApps API (Chrome/Edge)
+    if ('getInstalledRelatedApps' in navigator) {
+      try {
+        const relatedApps = await (navigator as any).getInstalledRelatedApps();
+        if (relatedApps && relatedApps.length > 0) {
+          console.log('🔍 App detected as installed (getInstalledRelatedApps)', relatedApps);
+          return true;
+        }
+      } catch (error) {
+        console.log('🔍 getInstalledRelatedApps not available or failed:', error);
+      }
+    }
+
+    // Method 3: Check for beforeinstallprompt event behavior
+    // If the event doesn't fire or is null, app might be installed
+    if ('onbeforeinstallprompt' in window) {
+      const hasInstallPrompt = await new Promise<boolean>((resolve) => {
+        let hasPrompt = false;
+        
+        const handler = (e: Event) => {
+          hasPrompt = true;
+          e.preventDefault(); // Prevent default browser install prompt
+          resolve(true);
+        };
+        
+        window.addEventListener('beforeinstallprompt', handler, { once: true });
+        
+        // If no prompt fires within 100ms, assume app is installed
+        setTimeout(() => {
+          window.removeEventListener('beforeinstallprompt', handler);
+          resolve(hasPrompt);
+        }, 100);
+      });
+      
+      if (!hasInstallPrompt) {
+        console.log('🔍 App detected as installed (no beforeinstallprompt event)');
+        return true;
+      }
+    }
+
+    // Method 4: Check localStorage for previous installation flag
+    const installationFlag = localStorage.getItem('pwa-installed');
+    if (installationFlag === 'true') {
+      console.log('🔍 App detected as installed (localStorage flag)');
+      return true;
+    }
+
+    // Method 5: Check for iOS home screen bookmark
+    if (this.isIOS) {
+      // On iOS, check if we can detect home screen installation
+      const isIOSInstalled = (window.navigator as any).standalone === true;
+      if (isIOSInstalled) {
+        console.log('🔍 App detected as installed (iOS standalone)');
+        return true;
+      }
+    }
+
+    console.log('🔍 App not detected as installed');
+    return false;
+  }
+
+  /**
+   * Set installation flag when app is installed
+   */
+  markAsInstalled(): void {
+    localStorage.setItem('pwa-installed', 'true');
+    console.log('✅ Marked app as installed in localStorage');
+  }
+
+  /**
+   * Clear installation flag (for testing)
+   */
+  clearInstallationFlag(): void {
+    localStorage.removeItem('pwa-installed');
+    console.log('🧹 Cleared installation flag');
+  }
+
+  canPrompt(): boolean {
+    // This will be checked asynchronously in the show method
+    // For now, just check basic conditions
     
     // Check display count limit only if maxModalDisplayCount is reasonable (not 999)
     if (this.maxModalDisplayCount < 999 && this.modalDisplayCount >= this.maxModalDisplayCount) {
@@ -201,8 +275,15 @@ export class AddToHomescreen {
     return 'browser';
   }
 
-  show(customMessage?: string): void {
+  async show(customMessage?: string): Promise<void> {
     console.log('🚀 Attempting to show Add to Homescreen prompt...');
+    
+    // Check if app is already installed (including browser detection)
+    const isInstalled = await this.isAppAlreadyInstalled();
+    if (isInstalled) {
+      console.log('🚫 App already installed - not showing prompt');
+      return;
+    }
     
     if (!this.canPrompt()) {
       console.log('🚫 AddToHomescreen: Cannot show prompt', {
@@ -232,12 +313,18 @@ export class AddToHomescreen {
 
   // Debug method to manually check standalone status
   debugStandaloneStatus(): void {
-    console.log('🔍 Debug Standalone Status:', {
-      isStandalone: this.isStandalone(),
-      displayMode: this.getCurrentDisplayMode(),
-      canPrompt: this.canPrompt(),
-      modalCount: this.modalDisplayCount,
-      userAgent: navigator.userAgent
+    this.isAppAlreadyInstalled().then(isInstalled => {
+      console.log('🔍 Debug Installation Status:', {
+        isStandalone: this.isStandalone(),
+        displayMode: this.getCurrentDisplayMode(),
+        isAppInstalled: isInstalled,
+        canPrompt: this.canPrompt(),
+        modalCount: this.modalDisplayCount,
+        hasBeforeInstallPrompt: 'onbeforeinstallprompt' in window,
+        hasGetInstalledRelatedApps: 'getInstalledRelatedApps' in navigator,
+        installationFlag: localStorage.getItem('pwa-installed'),
+        userAgent: navigator.userAgent.substring(0, 50)
+      });
     });
   }
 

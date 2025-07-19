@@ -229,29 +229,31 @@ function App() {
           
           // Add global access for debugging
           (window as any).debugAddToHomescreen = addToHomescreenInstance;
-          console.log('🔧 Debug: Use window.debugAddToHomescreen.debugStandaloneStatus() to check status');
+          console.log('🔧 Debug commands:');
+          console.log('  - window.debugAddToHomescreen.debugStandaloneStatus()');
+          console.log('  - window.debugAddToHomescreen.markAsInstalled()');
+          console.log('  - window.debugAddToHomescreen.clearInstallationFlag()');
           
           // Device detection for appropriate prompt display
           const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
           const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
                               (window.navigator as any).standalone === true;
           
+          // If we're in standalone mode, mark as installed
+          if (isStandalone) {
+            addToHomescreenInstance.markAsInstalled();
+          }
+          
           console.log('📱 Device info:', {
             isMobile,
             isStandalone,
             userAgent: navigator.userAgent,
-            canPrompt: addToHomescreenInstance.canPrompt()
+            canPrompt: addToHomescreenInstance.canPrompt(),
+            installationFlag: localStorage.getItem('pwa-installed')
           });
           
-          // Show prompt only if app is NOT already installed
-          if (!isStandalone && addToHomescreenInstance.canPrompt()) {
-            console.log('✅ Showing Add to Homescreen prompt');
-            addToHomescreenInstance.show();
-          } else if (isStandalone) {
-            console.log('📱 App already installed - skipping install prompt');
-          } else {
-            console.log('❌ Cannot show prompt - conditions not met');
-          }
+          // Show prompt (it will check installation status internally)
+          addToHomescreenInstance.show();
           
         } catch (error) {
           console.error('❌ Error initializing Add to Homescreen:', error);
