@@ -255,33 +255,6 @@ function App() {
             console.log('  - window.testIOSInstallation() // Test current status');
           }
           
-          // Add debug panel toggle for mobile
-          (window as any).showDebugPanel = () => {
-            setShowDebugPanel(true);
-            updateDebugInfo();
-          };
-          
-          (window as any).hideDebugPanel = () => {
-            setShowDebugPanel(false);
-          };
-          
-          const updateDebugInfo = async () => {
-            const isInstalled = await addToHomescreenInstance.isAppAlreadyInstalled();
-            const installationFlag = localStorage.getItem('pwa-installed');
-            const isStandalone = addToHomescreenInstance.isStandalone();
-            const userAgent = navigator.userAgent;
-            const isIOSSafari = /iPhone|iPad|iPod/.test(userAgent) && /Safari/.test(userAgent) && !/Chrome/.test(userAgent);
-            
-            setDebugInfo({
-              isInstalled,
-              installationFlag,
-              isStandalone,
-              isIOSSafari,
-              userAgent: userAgent.substring(0, 50) + '...',
-              canPrompt: addToHomescreenInstance.canPrompt()
-            });
-          };
-          
           // iOS Safari specific commands
           if (/iPhone|iPad|iPod/.test(navigator.userAgent) && /Safari/.test(navigator.userAgent)) {
             console.log('📱 iOS Safari specific commands:');
@@ -986,6 +959,78 @@ function App() {
             />
           )}
         </div>
+
+        {/* Debug Panel for Mobile Testing */}
+        {showDebugPanel && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[99999]">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-bold">Debug Panel</h3>
+                <button
+                  onClick={() => setShowDebugPanel(false)}
+                  className="p-2 rounded-lg hover:bg-gray-100"
+                >
+                  ✕
+                </button>
+              </div>
+              
+              {debugInfo && (
+                <div className="space-y-3 text-sm">
+                  <div>
+                    <strong>App Installed:</strong> {debugInfo.isInstalled ? '✅ YES' : '❌ NO'}
+                  </div>
+                  <div>
+                    <strong>localStorage Flag:</strong> {debugInfo.installationFlag || 'null'}
+                  </div>
+                  <div>
+                    <strong>Is Standalone:</strong> {debugInfo.isStandalone ? 'YES' : 'NO'}
+                  </div>
+                  <div>
+                    <strong>iOS Safari:</strong> {debugInfo.isIOSSafari ? 'YES' : 'NO'}
+                  </div>
+                  <div>
+                    <strong>Can Prompt:</strong> {debugInfo.canPrompt ? 'YES' : 'NO'}
+                  </div>
+                  <div>
+                    <strong>User Agent:</strong> {debugInfo.userAgent}
+                  </div>
+                </div>
+              )}
+              
+              <div className="mt-6 space-y-3">
+                <button
+                  onClick={() => {
+                    localStorage.setItem('pwa-installed', 'true');
+                    alert('✅ Marked as installed! Refresh page to test.');
+                  }}
+                  className="w-full p-3 bg-green-600 text-white rounded-lg"
+                >
+                  Mark as Installed
+                </button>
+                
+                <button
+                  onClick={() => {
+                    localStorage.removeItem('pwa-installed');
+                    alert('🗑️ Cleared flag! Refresh page to test.');
+                  }}
+                  className="w-full p-3 bg-red-600 text-white rounded-lg"
+                >
+                  Clear Installation Flag
+                </button>
+                
+                <button
+                  onClick={() => {
+                    const flag = localStorage.getItem('pwa-installed');
+                    alert(`Current flag: ${flag || 'null'}`);
+                  }}
+                  className="w-full p-3 bg-blue-600 text-white rounded-lg"
+                >
+                  Check Current Flag
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Modal Components - Rendered outside scrollable content */}
         {showModal && (
