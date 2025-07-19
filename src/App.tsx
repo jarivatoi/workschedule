@@ -298,11 +298,16 @@ function App() {
     return `${currentYear}-${(currentMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
   };
 
-  /**
-   * DATE CLICK HANDLER
-   * Opens shift editing modal for the selected date
-   */
   const handleDateClick = (day: number) => {
+    // Simplified click animation for mobile - no complex transforms
+    const clickedElement = document.querySelector(`[data-day="${day}"]`);
+    if (clickedElement) {
+      clickedElement.classList.add('animate-pulse');
+      setTimeout(() => {
+        clickedElement.classList.remove('animate-pulse');
+      }, 200);
+    }
+    
     const dateKey = formatDateKey(day);
     setSelectedDate(dateKey);
     setShowModal(true);
@@ -810,7 +815,6 @@ function App() {
     <>
       <div 
         className="min-h-screen bg-black select-none p-4"
-        onClick={handleTripleTap}
         style={{ 
           minHeight: '100vh',
           minHeight: '100dvh', // Dynamic viewport height for mobile
