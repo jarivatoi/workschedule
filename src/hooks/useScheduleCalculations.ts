@@ -73,13 +73,14 @@ export const useScheduleCalculations = (
           // Calculate with normal and overtime hours if available
           const normalHours = customShift.normalHours || 0;
           const overtimeHours = customShift.overtimeHours || 0;
+          const allowanceHours = customShift.allowanceHours || 0;
           const overtimeRate = settings.hourlyRate * (settings.overtimeMultiplier || 1.5);
           
-          const shiftAmount = (normalHours * settings.hourlyRate) + (overtimeHours * overtimeRate);
+          const shiftAmount = (normalHours * settings.hourlyRate) + (overtimeHours * overtimeRate) + (allowanceHours * settings.hourlyRate);
           
           // Fallback to old calculation if new fields not available
           const fallbackAmount = customShift.hours * settings.hourlyRate;
-          const finalAmount = (normalHours > 0 || overtimeHours > 0) ? shiftAmount : fallbackAmount;
+          const finalAmount = (normalHours > 0 || overtimeHours > 0 || allowanceHours > 0) ? shiftAmount : fallbackAmount;
           
           total += shiftAmount;
           

@@ -694,10 +694,10 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
         {/* 
           HOURS BREAKDOWN
           
-          Separates normal and overtime hours for transparency in calculations.
+         Separates normal, overtime, and allowance hours for transparency in calculations.
           Color coding helps users understand different pay rates.
         */}
-        <div className="grid grid-cols-2 gap-3 mb-3">
+        <div className="grid grid-cols-3 gap-2 mb-3">
           <div className="text-center p-2 bg-green-50 rounded-lg">
             <div className="text-xs text-green-600 font-medium">Normal</div>
             <div className="text-sm font-bold text-green-800">{shift.normalHours || 0}h</div>
@@ -705,6 +705,10 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
           <div className="text-center p-2 bg-orange-50 rounded-lg">
             <div className="text-xs text-orange-600 font-medium">Overtime</div>
             <div className="text-sm font-bold text-orange-800">{shift.overtimeHours || 0}h</div>
+          </div>
+          <div className="text-center p-2 bg-blue-50 rounded-lg">
+            <div className="text-xs text-blue-600 font-medium">Allowance</div>
+            <div className="text-sm font-bold text-blue-800">{shift.allowanceHours || 0}h</div>
           </div>
         </div>
 
@@ -715,9 +719,10 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
           Uses formatCurrency prop for consistent currency formatting.
           
           CALCULATION:
-          - Normal hours × hourly rate
-          - Overtime hours × (hourly rate × overtime multiplier)
-          - Total = normal amount + overtime amount
+         - Normal hours × hourly rate
+         - Overtime hours × (hourly rate × overtime multiplier)
+         - Allowance hours × hourly rate
+         - Total = normal amount + overtime amount + allowance amount
         */}
         <div className="text-center p-3 bg-indigo-50 rounded-lg">
           <div className="flex items-center justify-center mb-1">
@@ -726,7 +731,8 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
           <div className="text-lg font-bold text-indigo-800">
             {formatCurrency(
               (shift.normalHours || 0) * (settings.hourlyRate || 0) +
-              (shift.overtimeHours || 0) * ((settings.hourlyRate || 0) * (settings.overtimeMultiplier || 1.5))
+              (shift.overtimeHours || 0) * ((settings.hourlyRate || 0) * (settings.overtimeMultiplier || 1.5)) +
+              (shift.allowanceHours || 0) * (settings.hourlyRate || 0)
             )}
           </div>
         </div>
