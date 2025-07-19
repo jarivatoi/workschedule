@@ -86,7 +86,11 @@ function App() {
   const [artificialLoading, setArtificialLoading] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [smoothProgress, setSmoothProgress] = useState(0);
+  const [showDebugPanel, setShowDebugPanel] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<any>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const [tapCount, setTapCount] = useState(0);
+  const tapTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // ============================================================================
   // DATA PERSISTENCE SECTION
