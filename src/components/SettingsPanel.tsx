@@ -733,7 +733,14 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           ) : (
             // Shifts grid display
             <div className="grid grid-cols-1 gap-4">
-              {settings.customShifts.map((shift) => (
+              {settings.customShifts
+                .sort((a, b) => {
+                  // Sort by fromTime (start time)
+                  const timeA = a.fromTime || '00:00';
+                  const timeB = b.fromTime || '00:00';
+                  return timeA.localeCompare(timeB);
+                })
+                .map((shift) => (
                 <SwipeableShiftCard
                   key={shift.id}
                   shift={shift}
@@ -743,7 +750,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   formatTime={formatTime}
                   formatCurrency={formatCurrency}
                 />
-              ))}
+                ))}
             </div>
           )}
         </div>
