@@ -28,7 +28,8 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
     toTime: '',
     normalHours: 0,
     overtimeHours: 0,
-    allowanceHours: 0,
+    normalAllowanceHours: 0,
+    overtimeAllowanceHours: 0,
     applicableDays: {
       monday: false,
       tuesday: false,
@@ -97,7 +98,8 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
           toTime: editingShift.toTime,
           normalHours: editingShift.normalHours || 0,
           overtimeHours: editingShift.overtimeHours || 0,
-          allowanceHours: editingShift.allowanceHours || 0,
+          normalAllowanceHours: editingShift.normalAllowanceHours || 0,
+          overtimeAllowanceHours: editingShift.overtimeAllowanceHours || 0,
           applicableDays: editingShift.applicableDays || {
             monday: false,
             tuesday: false,
@@ -116,7 +118,8 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
           toTime: '',
           normalHours: 0,
           overtimeHours: 0,
-          allowanceHours: 0,
+          normalAllowanceHours: 0,
+          overtimeAllowanceHours: 0,
           applicableDays: {
             monday: false,
             tuesday: false,
@@ -226,7 +229,7 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
   };
 
   const calculateAmount = (normalHours: number, overtimeHours: number) => {
-    return (normalHours * hourlyRate) + (overtimeHours * overtimeRate) + (formData.allowanceHours * hourlyRate);
+    return (normalHours * hourlyRate) + (overtimeHours * overtimeRate) + (formData.normalAllowanceHours * hourlyRate) + (formData.overtimeAllowanceHours * overtimeRate);
   };
 
   const formatCurrency = (amount: number) => {
@@ -286,8 +289,9 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
         toTime: formData.toTime,
         normalHours: formData.normalHours,
         overtimeHours: formData.overtimeHours,
-        allowanceHours: formData.allowanceHours,
-        hours: formData.normalHours + formData.overtimeHours + formData.allowanceHours, // Keep for compatibility
+        normalAllowanceHours: formData.normalAllowanceHours,
+        overtimeAllowanceHours: formData.overtimeAllowanceHours,
+        hours: formData.normalHours + formData.overtimeHours + formData.normalAllowanceHours + formData.overtimeAllowanceHours, // Keep for compatibility
         applicableDays: formData.applicableDays
       };
       onSave(updatedShift);
@@ -300,8 +304,9 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
         toTime: formData.toTime,
         normalHours: formData.normalHours,
         overtimeHours: formData.overtimeHours,
-        allowanceHours: formData.allowanceHours,
-        hours: formData.normalHours + formData.overtimeHours + formData.allowanceHours, // Keep for compatibility
+        normalAllowanceHours: formData.normalAllowanceHours,
+        overtimeAllowanceHours: formData.overtimeAllowanceHours,
+        hours: formData.normalHours + formData.overtimeHours + formData.normalAllowanceHours + formData.overtimeAllowanceHours, // Keep for compatibility
         enabled: true,
         applicableDays: formData.applicableDays
       };
@@ -578,22 +583,73 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2 text-center">Allowance Hours</label>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Normal Allowance</label>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  value={formData.normalAllowanceHours || ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    const numericValue = value === '' ? 0 : parseFloat(value) || 0;
+                    setFormData(prev => ({ ...prev, normalAllowanceHours: numericValue }));
+                  }}
+                  onFocus={(e) => {
+                    if (e.target.value === '0' || e.target.value === '0.00') {
+                      e.target.select();
+                    }
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center"
+                  placeholder="0.00"
+                  step="0.01"
+                  min="0"
+                  max="24"
+                  style={{ textAlign: 'center' }}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Overtime Allowance</label>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  value={formData.overtimeAllowanceHours || ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    const numericValue = value === '' ? 0 : parseFloat(value) || 0;
+                    setFormData(prev => ({ ...prev, overtimeAllowanceHours: numericValue }));
+                  }}
+                  onFocus={(e) => {
+                    if (e.target.value === '0' || e.target.value === '0.00') {
+                      e.target.select();
+                    }
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center"
+                  placeholder="0.00"
+                  step="0.01"
+                  min="0"
+                  max="24"
+                  style={{ textAlign: 'center' }}
+                />
+              </div>
+            </div>
+
+            <div className="text-center text-xs text-gray-500">
+              <p><strong>Normal Allowance:</strong> Paid at regular hourly rate</p>
+              <p><strong>Overtime Allowance:</strong> Paid at overtime rate (1.5x)</p>
+            </div>
+
+            <div className="hidden">
+              <label className="block text-sm font-medium text-gray-700 mb-2 text-center">Legacy Allowance Hours</label>
               <input
                 type="number"
                 inputMode="decimal"
-                value={formData.allowanceHours || ''}
+                value={0}
                 onChange={(e) => {
-                  const value = e.target.value;
-                  const numericValue = value === '' ? 0 : parseFloat(value) || 0;
-                  setFormData(prev => ({ ...prev, allowanceHours: numericValue }));
+                  // Legacy field - no longer used
                 }}
-                onFocus={(e) => {
-                  if (e.target.value === '0' || e.target.value === '0.00') {
-                    e.target.select();
-                  }
-                }}
+                readOnly
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center"
                 placeholder="0.00"
                 step="0.01"
@@ -662,9 +718,9 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
             {formData.fromTime && formData.toTime && (
               <div className="mt-2 p-2 bg-blue-50 rounded text-sm text-blue-700 text-center">
                 Time difference: {formatHoursDisplay(calculateTimeDifference(formData.fromTime, formData.toTime))}
-                {formData.normalHours + formData.overtimeHours + formData.allowanceHours > 0 && (
+                {formData.normalHours + formData.overtimeHours + formData.normalAllowanceHours + formData.overtimeAllowanceHours > 0 && (
                   <span className="ml-2">
-                    | Total entered: {formatHoursDisplay(formData.normalHours + formData.overtimeHours + formData.allowanceHours)}
+                    | Total entered: {formatHoursDisplay(formData.normalHours + formData.overtimeHours + formData.normalAllowanceHours + formData.overtimeAllowanceHours)}
                   </span>
                 )}
               </div>
@@ -676,7 +732,8 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
                 <div>{formatShiftDisplay(formData.fromTime, formData.toTime)}</div>
                 <div>Normal: {formData.normalHours}h × {formatCurrency(hourlyRate)} = {formatCurrency((formData.normalHours || 0) * hourlyRate)}</div>
                 <div>Overtime: {formData.overtimeHours}h × {formatCurrency(overtimeRate)} = {formatCurrency((formData.overtimeHours || 0) * overtimeRate)}</div>
-                <div>Allowance: {formData.allowanceHours}h × {formatCurrency(hourlyRate)} = {formatCurrency((formData.allowanceHours || 0) * hourlyRate)}</div>
+                <div>Normal Allowance: {formData.normalAllowanceHours}h × {formatCurrency(hourlyRate)} = {formatCurrency((formData.normalAllowanceHours || 0) * hourlyRate)}</div>
+                <div>Overtime Allowance: {formData.overtimeAllowanceHours}h × {formatCurrency(overtimeRate)} = {formatCurrency((formData.overtimeAllowanceHours || 0) * overtimeRate)}</div>
                 <div className="font-semibold border-t pt-2">Total: {formatCurrency(calculateAmount(formData.normalHours || 0, formData.overtimeHours || 0))}</div>
               </div>
             </div>
@@ -695,7 +752,7 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
             </button>
             <button
               onClick={handleSave}
-              disabled={!formData.label || !formData.fromTime || !formData.toTime || (formData.normalHours <= 0 && formData.overtimeHours <= 0 && formData.allowanceHours <= 0)}
+              disabled={!formData.label || !formData.fromTime || !formData.toTime || (formData.normalHours <= 0 && formData.overtimeHours <= 0)}
               className="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {editingShift ? 'Update Shift' : 'Add Shift'}

@@ -39,7 +39,8 @@ export interface CustomShift {
   hours: number;
   normalHours?: number;
   overtimeHours?: number;
-  allowanceHours?: number;
+  normalAllowanceHours?: number;
+  overtimeAllowanceHours?: number;
   enabled: boolean;
   applicableDays?: {
     monday: boolean;

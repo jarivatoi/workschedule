@@ -73,18 +73,25 @@ export const useScheduleCalculations = (
           // Calculate with normal and overtime hours if available
           const normalHours = customShift.normalHours || 0;
           const overtimeHours = customShift.overtimeHours || 0;
-          const allowanceHours = customShift.allowanceHours || 0;
+          const normalAllowanceHours = customShift.normalAllowanceHours || 0;
+          const overtimeAllowanceHours = customShift.overtimeAllowanceHours || 0;
+          // Legacy support for old allowanceHours field
+          const legacyAllowanceHours = (customShift as any).allowanceHours || 0;
           const overtimeRate = settings.hourlyRate * (settings.overtimeMultiplier || 1.5);
           
-          const shiftAmount = (normalHours * settings.hourlyRate) + (overtimeHours * overtimeRate) + (allowanceHours * settings.hourlyRate);
+          const shiftAmount = (normalHours * settings.hourlyRate) + 
+                             (overtimeHours * overtimeRate) + 
+                             (normalAllowanceHours * settings.hourlyRate) + 
+                             (overtimeAllowanceHours * overtimeRate) +
+                             (legacyAllowanceHours * settings.hourlyRate); // Legacy support
           
           // Fallback to old calculation if new fields not available
           const fallbackAmount = customShift.hours * settings.hourlyRate;
-          const finalAmount = (normalHours > 0 || overtimeHours > 0 || allowanceHours > 0) ? shiftAmount : fallbackAmount;
+          const finalAmount = (normalHours > 0 || overtimeHours > 0 || normalAllowanceHours > 0 || overtimeAllowanceHours > 0 || legacyAllowanceHours > 0) ? shiftAmount : fallbackAmount;
           
-          total += shiftAmount;
+          total += finalAmount;
           
-          console.log(`💰 Found custom shift ${customShift.label} (N:${normalHours}h, OT:${overtimeHours}h) = Rs ${finalAmount.toFixed(2)}`);
+          console.log(`💰 Found custom shift ${customShift.label} (N:${normalHours}h, OT:${overtimeHours}h, NA:${normalAllowanceHours}h, OTA:${overtimeAllowanceHours}h) = Rs ${finalAmount.toFixed(2)}`);
           
           // Check if this date is up to and INCLUDING today for month-to-date calculation
           if (workMonth === today.getMonth() && workYear === today.getFullYear() && workDate.getDate() <= today.getDate()) {
