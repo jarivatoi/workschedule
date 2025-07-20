@@ -258,11 +258,6 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
       return;
     }
 
-    if (formData.normalHours <= 0 && formData.overtimeHours <= 0) {
-      setError('Validation Error: At least one hour field (Normal, Overtime, or Allowance) must be greater than 0');
-      return;
-    }
-    
     // Validate at least one day is selected
     const hasSelectedDay = Object.entries(formData.applicableDays)
       .filter(([key]) => key !== 'specialDay') // Exclude specialDay from validation
@@ -274,10 +269,12 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
     }
     
     // Validate hours don't exceed time difference
-    const hoursValidation = validateHours(formData.normalHours + formData.overtimeHours, 0, formData.fromTime, formData.toTime);
-    if (hoursValidation) {
-      setError(`Hours Validation Error: ${hoursValidation}`);
-      return;
+    if (formData.fromTime && formData.toTime) {
+      const hoursValidation = validateHours(formData.normalHours + formData.overtimeHours, 0, formData.fromTime, formData.toTime);
+      if (hoursValidation) {
+        setError(`Hours Validation Error: ${hoursValidation}`);
+        return;
+      }
     }
     
     if (editingShift) {
@@ -729,7 +726,7 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
             <div className="mt-4 p-4 bg-gray-50 rounded-lg">
               <div className="font-medium mb-2">Preview:</div>
               <div className="text-sm space-y-1">
-                <div>{formData.fromTime && formData.toTime ? formatShiftDisplay(formData.fromTime, formData.toTime) : ''}</div>
+                <div>{formData.fromTime && formData.toTime ? formatShiftDisplay(formData.fromTime, formData.toTime) : 'No time range set'}</div>
                 {formData.normalHours > 0 && (
                   <div>Normal: {formData.normalHours}h × {formatCurrency(hourlyRate)} = {formatCurrency((formData.normalHours || 0) * hourlyRate)}</div>
                 )}
@@ -742,7 +739,12 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
                 {formData.overtimeAllowanceHours > 0 && (
                   <div>Overtime Allowance: {formData.overtimeAllowanceHours}h × {formatCurrency(overtimeRate)} = {formatCurrency((formData.overtimeAllowanceHours || 0) * overtimeRate)}</div>
                 )}
-                <div className="font-semibold border-t pt-2">Total: {formatCurrency(calculateAmount(formData.normalHours || 0, formData.overtimeHours || 0))}</div>
+                {(formData.normalHours > 0 || formData.overtimeHours > 0 || formData.normalAllowanceHours > 0 || formData.overtimeAllowanceHours > 0) && (
+                  <div className="font-semibold border-t pt-2">Total: {formatCurrency(calculateAmount(formData.normalHours || 0, formData.overtimeHours || 0))}</div>
+                )}
+                {!(formData.normalHours > 0 || formData.overtimeHours > 0 || formData.normalAllowanceHours > 0 || formData.overtimeAllowanceHours > 0) && (
+                  <div className="text-gray-500 italic border-t pt-2">No hours set - amount will be Rs 0.00</div>
+                )}
               </div>
             </div>
           </div>
@@ -760,7 +762,7 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
             </button>
             <button
               onClick={handleSave}
-              disabled={!formData.label || !formData.fromTime || !formData.toTime || (formData.normalHours <= 0 && formData.overtimeHours <= 0)}
+              disabled={!formData.label.trim()}
               className="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {editingShift ? 'Update Shift' : 'Add Shift'}
