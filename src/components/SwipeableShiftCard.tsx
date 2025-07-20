@@ -698,25 +698,25 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
           Color coding helps users understand different pay rates.
         */}
         <div className="grid grid-cols-2 gap-2 mb-3">
-          <div className="text-center p-2 bg-green-50 rounded-lg">
-            <div className="text-xs text-green-600 font-medium">Normal</div>
-            <div className="text-sm font-bold text-green-800">{shift.normalHours || 0}h</div>
+          <div className="text-center">
+            <div className="text-xs text-gray-600 font-medium">Normal</div>
+            <div className="text-sm font-bold text-gray-800">{shift.normalHours || 0}h</div>
           </div>
-          <div className="text-center p-2 bg-orange-50 rounded-lg">
-            <div className="text-xs text-orange-600 font-medium">Overtime</div>
-            <div className="text-sm font-bold text-orange-800">{shift.overtimeHours || 0}h</div>
+          <div className="text-center">
+            <div className="text-xs text-gray-600 font-medium">Overtime</div>
+            <div className="text-sm font-bold text-gray-800">{shift.overtimeHours || 0}h</div>
           </div>
         </div>
         
         {/* Allowance Hours Breakdown */}
         <div className="grid grid-cols-2 gap-2 mb-3">
-          <div className="text-center p-2 bg-blue-50 rounded-lg">
-            <div className="text-xs text-blue-600 font-medium">Normal Allow.</div>
-            <div className="text-sm font-bold text-blue-800">{shift.normalAllowanceHours || 0}h</div>
+          <div className="text-center">
+            <div className="text-xs text-gray-600 font-medium">Normal Allow.</div>
+            <div className="text-sm font-bold text-gray-800">{shift.normalAllowanceHours || 0}h</div>
           </div>
-          <div className="text-center p-2 bg-blue-50 rounded-lg">
-            <div className="text-xs text-blue-600 font-medium">OT Allow.</div>
-            <div className="text-sm font-bold text-blue-800">{shift.overtimeAllowanceHours || 0}h</div>
+          <div className="text-center">
+            <div className="text-xs text-gray-600 font-medium">OT Allow.</div>
+            <div className="text-sm font-bold text-gray-800">{shift.overtimeAllowanceHours || 0}h</div>
           </div>
         </div>
 
@@ -733,11 +733,11 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
          - Overtime allowance hours × (hourly rate × overtime multiplier)
          - Total = normal amount + overtime amount + normal allowance + overtime allowance
         */}
-        <div className="text-center p-3 bg-indigo-50 rounded-lg">
+        <div className="text-center">
           <div className="flex items-center justify-center mb-1">
-            <span className="text-xs text-indigo-600 font-medium">Total Amount</span>
+            <span className="text-xs text-gray-600 font-medium">Total Amount</span>
           </div>
-          <div className="text-lg font-bold text-indigo-800">
+          <div className="text-lg font-bold text-gray-800">
             {formatCurrency(
               (shift.normalHours || 0) * (settings.hourlyRate || 0) +
               (shift.overtimeHours || 0) * ((settings.hourlyRate || 0) * (settings.overtimeMultiplier || 1.5)) +
