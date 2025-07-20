@@ -729,7 +729,7 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
             <div className="mt-4 p-4 bg-gray-50 rounded-lg">
               <div className="font-medium mb-2">Preview:</div>
               <div className="text-sm space-y-1">
-                <div>{formatShiftDisplay(formData.fromTime, formData.toTime)}</div>
+                <div>{formData.fromTime && formData.toTime ? formatShiftDisplay(formData.fromTime, formData.toTime) : ''}</div>
                 {formData.normalHours > 0 && (
                   <div>Normal: {formData.normalHours}h × {formatCurrency(hourlyRate)} = {formatCurrency((formData.normalHours || 0) * hourlyRate)}</div>
                 )}
