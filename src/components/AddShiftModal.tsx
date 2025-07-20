@@ -728,8 +728,8 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
               <div className="text-sm space-y-1">
                 <div>{formData.fromTime && formData.toTime ? formatShiftDisplay(formData.fromTime, formData.toTime) : 'No time range set'}</div>
                 
-                {/* Only show hours breakdown if any hours are set */}
-                {(formData.normalHours > 0 || formData.overtimeHours > 0 || formData.normalAllowanceHours > 0 || formData.overtimeAllowanceHours > 0) && (
+                {/* Only show hours breakdown and amount if total amount > 0 */}
+                {calculateAmount(formData.normalHours || 0, formData.overtimeHours || 0) > 0 && (
                   <>
                     {formData.normalHours > 0 && (
                       <div>Normal: {formData.normalHours}h × {formatCurrency(hourlyRate)} = {formatCurrency((formData.normalHours || 0) * hourlyRate)}</div>
