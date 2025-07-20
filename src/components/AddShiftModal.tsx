@@ -727,23 +727,24 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
               <div className="font-medium mb-2">Preview:</div>
               <div className="text-sm space-y-1">
                 <div>{formData.fromTime && formData.toTime ? formatShiftDisplay(formData.fromTime, formData.toTime) : 'No time range set'}</div>
-                {formData.normalHours > 0 && (
-                  <div>Normal: {formData.normalHours}h × {formatCurrency(hourlyRate)} = {formatCurrency((formData.normalHours || 0) * hourlyRate)}</div>
-                )}
-                {formData.overtimeHours > 0 && (
-                  <div>Overtime: {formData.overtimeHours}h × {formatCurrency(overtimeRate)} = {formatCurrency((formData.overtimeHours || 0) * overtimeRate)}</div>
-                )}
-                {formData.normalAllowanceHours > 0 && (
-                  <div>Normal Allowance: {formData.normalAllowanceHours}h × {formatCurrency(hourlyRate)} = {formatCurrency((formData.normalAllowanceHours || 0) * hourlyRate)}</div>
-                )}
-                {formData.overtimeAllowanceHours > 0 && (
-                  <div>Overtime Allowance: {formData.overtimeAllowanceHours}h × {formatCurrency(overtimeRate)} = {formatCurrency((formData.overtimeAllowanceHours || 0) * overtimeRate)}</div>
-                )}
+                
+                {/* Only show hours breakdown if any hours are set */}
                 {(formData.normalHours > 0 || formData.overtimeHours > 0 || formData.normalAllowanceHours > 0 || formData.overtimeAllowanceHours > 0) && (
-                  <div className="font-semibold border-t pt-2">Total: {formatCurrency(calculateAmount(formData.normalHours || 0, formData.overtimeHours || 0))}</div>
-                )}
-                {!(formData.normalHours > 0 || formData.overtimeHours > 0 || formData.normalAllowanceHours > 0 || formData.overtimeAllowanceHours > 0) && (
-                  <div className="text-gray-500 italic border-t pt-2">No hours set - amount will be Rs 0.00</div>
+                  <>
+                    {formData.normalHours > 0 && (
+                      <div>Normal: {formData.normalHours}h × {formatCurrency(hourlyRate)} = {formatCurrency((formData.normalHours || 0) * hourlyRate)}</div>
+                    )}
+                    {formData.overtimeHours > 0 && (
+                      <div>Overtime: {formData.overtimeHours}h × {formatCurrency(overtimeRate)} = {formatCurrency((formData.overtimeHours || 0) * overtimeRate)}</div>
+                    )}
+                    {formData.normalAllowanceHours > 0 && (
+                      <div>Normal Allowance: {formData.normalAllowanceHours}h × {formatCurrency(hourlyRate)} = {formatCurrency((formData.normalAllowanceHours || 0) * hourlyRate)}</div>
+                    )}
+                    {formData.overtimeAllowanceHours > 0 && (
+                      <div>Overtime Allowance: {formData.overtimeAllowanceHours}h × {formatCurrency(overtimeRate)} = {formatCurrency((formData.overtimeAllowanceHours || 0) * overtimeRate)}</div>
+                    )}
+                    <div className="font-semibold border-t pt-2">Total: {formatCurrency(calculateAmount(formData.normalHours || 0, formData.overtimeHours || 0))}</div>
+                  </>
                 )}
               </div>
             </div>
