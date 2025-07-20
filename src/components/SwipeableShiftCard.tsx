@@ -672,9 +672,9 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
           Hours badge uses consistent styling with app theme.
         */}
         <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center space-x-2 flex-1">
+          <div className="flex items-center space-x-3 flex-1">
             <h4 className="font-semibold text-gray-800 text-lg">{shift.label}</h4>
-            <span className="text-sm text-gray-600 font-medium">
+            <span className="text-lg font-semibold text-gray-800 px-3 py-1 border-2 border-gray-300 rounded-lg bg-gray-50">
               {formatTime(shift.fromTime)} - {formatTime(shift.toTime)}
             </span>
           </div>
