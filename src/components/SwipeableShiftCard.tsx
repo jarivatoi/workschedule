@@ -678,11 +678,50 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
               {formatTime(shift.fromTime)} - {formatTime(shift.toTime)}
             </span>
           </div>
-          {shift.hours > 0 && (
-            <span className="text-xs px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full font-medium">
-              {shift.hours}h
-            </span>
-          )}
+          {(() => {
+            const totalAmount = (shift.normalHours || 0) * (settings.hourlyRate || 0) +
+                               (shift.overtimeHours || 0) * ((settings.hourlyRate || 0) * (settings.overtimeMultiplier || 1.5)) +
+                               (shift.normalAllowanceHours || 0) * (settings.hourlyRate || 0) +
+                               (shift.overtimeAllowanceHours || 0) * ((settings.hourlyRate || 0) * (settings.overtimeMultiplier || 1.5));
+            
+            if (totalAmount > 0 && shift.hours > 0) {
+              // Show hours when there's a calculated amount
+              return (
+                <span className="text-xs px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full font-medium">
+                  {shift.hours}h
+                </span>
+              );
+            } else if (shift.fromTime && shift.toTime) {
+              // Show time difference when no amount but times are set
+              const calculateTimeDifference = (fromTime: string, toTime: string): number => {
+                if (!fromTime || !toTime) return 0;
+                
+                const [fromHour, fromMin] = fromTime.split(':').map(Number);
+                const [toHour, toMin] = toTime.split(':').map(Number);
+                
+                const fromMinutes = fromHour * 60 + fromMin;
+                let toMinutes = toHour * 60 + toMin;
+                
+                // Handle overnight shifts
+                if (toMinutes <= fromMinutes) {
+                  toMinutes += 24 * 60;
+                }
+                
+                return (toMinutes - fromMinutes) / 60;
+              };
+              
+              const timeDiff = calculateTimeDifference(shift.fromTime, shift.toTime);
+              if (timeDiff > 0) {
+                return (
+                  <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-full font-medium">
+                    {timeDiff}h
+                  </span>
+                );
+              }
+            }
+            
+            return null;
+          })()}
         </div>
 
         {/* 
