@@ -682,13 +682,148 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
           Displays shift name and total hours in a clean, scannable format.
           Hours badge uses consistent styling with app theme.
         */}
-        <div className="flex items-center justify-between mb-3">
-          <h4 className="font-semibold text-gray-800 text-lg">{shift.label}</h4>
-          <div className="flex-1 flex justify-center">
+        <div className="mb-3">
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="font-semibold text-gray-800 text-lg">{shift.label}</h4>
+            {(() => {
+              const totalAmount = (shift.normalHours || 0) * (settings.hourlyRate || 0) +
+                                 (shift.overtimeHours || 0) * ((settings.hourlyRate || 0) * (settings.overtimeMultiplier || 1.5)) +
+                                 (shift.normalAllowanceHours || 0) * (settings.hourlyRate || 0) +
+                                 (shift.overtimeAllowanceHours || 0) * ((settings.hourlyRate || 0) * (settings.overtimeMultiplier || 1.5));
+              
+              if (totalAmount > 0 && shift.hours > 0) {
+                // Show hours when there's a calculated amount
+                return (
+                  <span className="text-xs px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full font-medium">
+                    {formatHoursMinutes(shift.hours)}
+                  </span>
+                );
+              } else if (shift.fromTime && shift.toTime) {
+                // Show time difference when no amount but times are set
+                const calculateTimeDifference = (fromTime: string, toTime: string): number => {
+                  if (!fromTime || !toTime) return 0;
+                  
+                  const [fromHour, fromMin] = fromTime.split(':').map(Number);
+                  const [toHour, toMin] = toTime.split(':').map(Number);
+                  
+                  const fromMinutes = fromHour * 60 + fromMin;
+                  let toMinutes = toHour * 60 + toMin;
+                  
+                  // Handle overnight shifts
+                  if (toMinutes <= fromMinutes) {
+                    toMinutes += 24 * 60;
+                  }
+                  
+                  return (toMinutes - fromMinutes) / 60;
+                };
+                
+                const timeDiff = calculateTimeDifference(shift.fromTime, shift.toTime);
+                if (timeDiff > 0) {
+                  return (
+                    <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-full font-medium">
+                      {formatHoursMinutes(timeDiff)}
+                    </span>
+                  );
+                }
+              }
+              
+              return null;
+            })()}
+          </div>
+          <div className="flex justify-center">
             <span className="text-lg font-semibold text-gray-800 px-3 py-1 border-2 border-gray-300 rounded-lg bg-gray-50">
               {formatTime(shift.fromTime)} - {formatTime(shift.toTime)}
             </span>
           </div>
+        </div>
+        
+        {/* 
+          HOURS BREAKDOWN
+          
+         Separates normal, overtime, and allowance hours (both normal and overtime rates) for transparency in calculations.
+          Color coding helps users understand different pay rates.
+        */}
+        {/* Calculate total amount to determine if we should show details */}
+        {(() => {
+          const totalAmount = (shift.normalHours || 0) * (settings.hourlyRate || 0) +
+                             (shift.overtimeHours || 0) * ((settings.hourlyRate || 0) * (settings.overtimeMultiplier || 1.5)) +
+                             (shift.normalAllowanceHours || 0) * (settings.hourlyRate || 0) +
+                             (shift.overtimeAllowanceHours || 0) * ((settings.hourlyRate || 0) * (settings.overtimeMultiplier || 1.5));
+          
+          // Only show hours breakdown and amount if total amount > 0
+          if (totalAmount > 0) {
+            return (
+              <>
+                {/* Hours Breakdown - only show if there are hours */}
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  <div className="text-center p-2 bg-green-50 rounded-lg">
+                    <div className="text-xs text-green-600 font-medium">Normal</div>
+                    <div className="text-sm font-bold text-green-800">{shift.normalHours || 0}h</div>
+                  </div>
+                  <div className="text-center p-2 bg-orange-50 rounded-lg">
+                    <div className="text-xs text-orange-600 font-medium">Overtime</div>
+                    <div className="text-sm font-bold text-orange-800">{shift.overtimeHours || 0}h</div>
+                  </div>
+                </div>
+                
+                {/* Allowance Hours Breakdown */}
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  <div className="text-center p-2 bg-blue-50 rounded-lg">
+                    <div className="text-xs text-blue-600 font-medium">Normal Allow.</div>
+                    <div className="text-sm font-bold text-blue-800">{shift.normalAllowanceHours || 0}h</div>
+                  </div>
+                  <div className="text-center p-2 bg-blue-50 rounded-lg">
+                    <div className="text-xs text-blue-600 font-medium">OT Allow.</div>
+                    <div className="text-sm font-bold text-blue-800">{shift.overtimeAllowanceHours || 0}h</div>
+                  </div>
+                </div>
+
+                {/* 
+                  AMOUNT DISPLAY
+                  
+                  Shows calculated total amount for this shift including overtime.
+                  Uses formatCurrency prop for consistent currency formatting.
+                  
+                  CALCULATION:
+                 - Normal hours × hourly rate
+                 - Overtime hours × (hourly rate × overtime multiplier)
+                 - Normal allowance hours × hourly rate
+                 - Overtime allowance hours × (hourly rate × overtime multiplier)
+                 - Total = normal amount + overtime amount + normal allowance + overtime allowance
+                */}
+                <div className="text-center p-3 bg-indigo-50 rounded-lg">
+                  <div className="flex items-center justify-center mb-1">
+                    <span className="text-xs text-indigo-600 font-medium">Total Amount</span>
+                  </div>
+                  <div className="text-lg font-bold text-indigo-800">
+                    {formatCurrency(totalAmount)}
+                  </div>
+                </div>
+              </>
+            );
+          }
+          
+          // If no amount, return null (show nothing)
+          return null;
+        })()}
+
+        {/* 
+          VISUAL INDICATORS
+          
+          Provides subtle visual feedback about card state:
+          - Blue dot when actions are revealed
+          - Swipe hint dots on mobile when closed
+        */}
+        
+        {/* Active state indicator */}
+        {isOpen && (
+          <div className="absolute top-2 right-2 w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+        )}
+      </div>
+    </div>
+  );
+};
+
           {(() => {
             const totalAmount = (shift.normalHours || 0) * (settings.hourlyRate || 0) +
                                (shift.overtimeHours || 0) * ((settings.hourlyRate || 0) * (settings.overtimeMultiplier || 1.5)) +
