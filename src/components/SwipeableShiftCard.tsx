@@ -576,6 +576,17 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
     };
   }, [shift.id]);
   
+  // Helper function to format hours and minutes
+  const formatHoursMinutes = (totalHours: number): string => {
+    const hours = Math.floor(totalHours);
+    const minutes = Math.round((totalHours - hours) * 60);
+    
+    if (hours === 0 && minutes === 0) return '0mins';
+    if (hours === 0) return `${minutes}mins`;
+    if (minutes === 0) return `${hours}h`;
+    return `${hours}h ${minutes}mins`;
+  };
+  
   // ==========================================================================
   // RENDER COMPONENT
   // ==========================================================================
@@ -721,25 +732,9 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
             }
             
             return null;
-          };
-          
-          return null; // This return is for the outer function
-        })()}
+          })()}
         </div>
         
-        {/* Helper function to format hours and minutes */}
-        {(() => {
-          const formatHoursMinutes = (totalHours: number): string => {
-            const hours = Math.floor(totalHours);
-            const minutes = Math.round((totalHours - hours) * 60);
-            
-            if (hours === 0 && minutes === 0) return '0mins';
-            if (hours === 0) return `${minutes}mins`;
-            if (minutes === 0) return `${hours}h`;
-            return `${hours}h ${minutes}mins`;
-          };
-          
-
         {/* 
           HOURS BREAKDOWN
           
