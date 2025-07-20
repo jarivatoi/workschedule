@@ -673,9 +673,11 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
         */}
         <div className="flex items-center justify-between mb-3">
           <h4 className="font-semibold text-gray-800 text-lg">{shift.label}</h4>
-          <span className="text-xs px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full font-medium">
-            {shift.hours}h
-          </span>
+          {shift.hours > 0 && (
+            <span className="text-xs px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full font-medium">
+              {shift.hours}h
+            </span>
+          )}
         </div>
 
         {/* 
