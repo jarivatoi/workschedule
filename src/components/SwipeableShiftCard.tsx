@@ -688,7 +688,7 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
               // Show hours when there's a calculated amount
               return (
                 <span className="text-xs px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full font-medium">
-                  {shift.hours}h
+                  {formatHoursMinutes(shift.hours)}
                 </span>
               );
             } else if (shift.fromTime && shift.toTime) {
@@ -714,15 +714,31 @@ export const SwipeableShiftCard: React.FC<SwipeableShiftCardProps> = ({
               if (timeDiff > 0) {
                 return (
                   <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-full font-medium">
-                    {timeDiff}h
+                    {formatHoursMinutes(timeDiff)}
                   </span>
                 );
               }
             }
             
             return null;
-          })()}
+          };
+          
+          return null; // This return is for the outer function
+        })()}
         </div>
+        
+        {/* Helper function to format hours and minutes */}
+        {(() => {
+          const formatHoursMinutes = (totalHours: number): string => {
+            const hours = Math.floor(totalHours);
+            const minutes = Math.round((totalHours - hours) * 60);
+            
+            if (hours === 0 && minutes === 0) return '0mins';
+            if (hours === 0) return `${minutes}mins`;
+            if (minutes === 0) return `${hours}h`;
+            return `${hours}h ${minutes}mins`;
+          };
+          
 
         {/* 
           HOURS BREAKDOWN
